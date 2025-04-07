@@ -48,7 +48,7 @@ class CosmicShoreline:
     carbon loss rates, and more. All necessary data are loaded during initialization.
     """
 
-    def __init__(self, data_path="/project/abbot/xuanji/2.Cosmic-Shoreline/models/data-interpolation/"):
+    def __init__(self, data_path="./data-interpolation/"):
         """
         Initialize the CosmicShoreline class.
 
@@ -1157,7 +1157,7 @@ class CosmicShoreline:
         
         C_magma = f_c_magma * M_magma
         C_atm = 12 / MMR * psurf / pl_g * 4 * np.pi * (pl_radiuse * 6.37e6) ** 2
-        if MMR == 29 or 28:
+        if MMR == 29 or MMR == 28:
             C_atm = 28 / MMR * psurf / pl_g * 4 * np.pi * (pl_radiuse * 6.37e6) ** 2
         if MMR == 18:
             C_atm = psurf / pl_g * 4 * np.pi * (pl_radiuse * 6.37e6) ** 2
@@ -1218,43 +1218,33 @@ class CosmicShoreline:
             # C_tot: kg
             alpha=1.937e-9/1e6
             beta=0.714
-
-            
         elif MMR==16:
             # C_tot: kg
             alpha=9.937e-8/1e6
             beta=1
-            
-            
         elif MMR==29:
             # C_tot: kg
             alpha=7e-5/1e6
             beta=1.8
-            
-            
         elif MMR==18:
             # C_tot: kg
             alpha=1.033/1e6
             beta=1.747
             
-        psurf = (f_c_magma/alpha)**beta
-        Tsurf = self.Ts_from_ps(pl_teq, psurf, pl_masse, MMR, st_mass, 
-                                p_RCB=p_RCB,gamma=gamma,inversion=inversion,albedo=albedo)
-        
+        m_atm = f_C * pl_masse * self.earth_mass * MMR / 12
+        psurf = m_atm * pl_g / (4 * np.pi * (pl_radiuse * self.earth_radius)**2)
+        Tsurf = self.Ts_from_ps(pl_teq, psurf, pl_masse, MMR, st_mass,
+                            p_RCB=p_RCB, gamma=gamma, inversion=inversion, albedo=albedo)
         M_magma = self.cal_m_magma(Tsurf, pl_masse)
-        if M_magma<=0:
-            m_atm = f_C*pl_masse*self.earth_mass*MMR/12
-            psurf  = m_atm*pl_g/(4*np.pi*(pl_radiuse*6.37e6)**2)
-            Tsurf = self.Ts_from_ps(pl_teq, psurf, pl_masse, MMR, st_mass, 
-                                p_RCB=p_RCB,gamma=gamma,inversion=inversion,albedo=albedo)
-        
-        # if f_c_magma>0.99:
-        #     m_atm = f_C*pl_masse*self.earth_mass-f_c_magma*2/3*pl_masse*self.earth_mass
-        #     psurf = m_atm*pl_g/(4*np.pi*(pl_radiuse*6.37e6)**2)
-        #     # psurf = min(psurf,1e9)
-        #     # pl_teff = min(pl_teff,2500)
-        #     Tsurf = self.Ts_from_ps(pl_teff, psurf, pl_masse, MMR, st_mass)
-        return psurf,Tsurf
+
+        if M_magma > 0:
+            psurf = (f_c_magma / alpha) ** beta
+            Tsurf = self.Ts_from_ps(pl_teq, psurf, pl_masse, MMR, st_mass,
+                                p_RCB=p_RCB, gamma=gamma, inversion=inversion, albedo=albedo)
+            M_magma = self.cal_m_magma(Tsurf, pl_masse)
+            # f_C_calc = (f_c_magma * M_magma + psurf * 4 * np.pi * (pl_radiuse * 6.37e6)**2 / pl_g / MMR * 12) \
+            #         / (pl_masse * self.earth_mass)
+        return psurf, Tsurf
     
     def get_TPz_profile(self, pl_rade, pl_masse, P_rad, P_surf, pl_teq, MMW, inversion=False, 
                     P_rcb=0.25*1e5, gamma=None, albedo=0.3):
@@ -1383,3 +1373,5 @@ if __name__ == "__main__":
     print("Calculated L_XUV:", L_XUV)
     
     # You can add further examples to test other methods.
+
+
