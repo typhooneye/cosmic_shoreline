@@ -205,7 +205,7 @@ class CosmicShoreline:
         self.M_R_interpolator_rock_xR = scipy.interpolate.interp1d(y_data_rock, x_data_rock, fill_value='extrapolate')
 
         # ---------------------------
-        # CR24 N2O2 atmosphere interpolation (Chatterjee and Pierrehumbert 2024)
+        # CP24 N2O2 atmosphere interpolation (Chatterjee and Pierrehumbert 2024)
         # ---------------------------
         earth_radius = self.earth_radius
         F_xuv_to_Earth_range = np.logspace(0,5,100)
@@ -276,13 +276,13 @@ class CosmicShoreline:
         log_fxuv_low_limit_high = np.array([log_Fxuv_Mars_high_range[0], log_Fxuv_Earth_high_range[0], log_Fxuv_1d76Me_high_range[0], log_Fxuv_5d9M_high_range[0]])
         log_fxuv_high_limit_high = np.array([log_Fxuv_Mars_high_range[1], log_Fxuv_Earth_high_range[1], log_Fxuv_1d76Me_high_range[1], log_Fxuv_5d9M_high_range[1]])
 
-        self.CR24_N2O2_EL_interp = LinearNDInterpolatorExt((np.log10(F_xuv_data), pl_masse_data), np.log10(M_dot_per_area_data))
+        self.CP24_N2O2_EL_interp = LinearNDInterpolatorExt((np.log10(F_xuv_data), pl_masse_data), np.log10(M_dot_per_area_data))
 
-        self.CR24_N2O2_low_cut_interp_low = scipy.interpolate.interp1d(pl_masse_arr, log_fxuv_low_limit_low, fill_value=(log_fxuv_low_limit_low[0], log_fxuv_low_limit_low[-1]), bounds_error=False)
-        self.CR24_N2O2_high_cut_interp_low = scipy.interpolate.interp1d(pl_masse_arr, log_fxuv_high_limit_low, fill_value=(log_fxuv_high_limit_low[0], log_fxuv_high_limit_low[-1]), bounds_error=False)
+        self.CP24_N2O2_low_cut_interp_low = scipy.interpolate.interp1d(pl_masse_arr, log_fxuv_low_limit_low, fill_value=(log_fxuv_low_limit_low[0], log_fxuv_low_limit_low[-1]), bounds_error=False)
+        self.CP24_N2O2_high_cut_interp_low = scipy.interpolate.interp1d(pl_masse_arr, log_fxuv_high_limit_low, fill_value=(log_fxuv_high_limit_low[0], log_fxuv_high_limit_low[-1]), bounds_error=False)
 
-        self.CR24_N2O2_low_cut_interp_high = scipy.interpolate.interp1d(pl_masse_arr, log_fxuv_low_limit_high, fill_value=(log_fxuv_low_limit_high[0], log_fxuv_low_limit_high[-1]), bounds_error=False)
-        self.CR24_N2O2_high_cut_interp_high = scipy.interpolate.interp1d(pl_masse_arr, log_fxuv_high_limit_high, fill_value=(log_fxuv_high_limit_high[0], log_fxuv_high_limit_high[-1]), bounds_error=False)
+        self.CP24_N2O2_low_cut_interp_high = scipy.interpolate.interp1d(pl_masse_arr, log_fxuv_low_limit_high, fill_value=(log_fxuv_low_limit_high[0], log_fxuv_low_limit_high[-1]), bounds_error=False)
+        self.CP24_N2O2_high_cut_interp_high = scipy.interpolate.interp1d(pl_masse_arr, log_fxuv_high_limit_high, fill_value=(log_fxuv_high_limit_high[0], log_fxuv_high_limit_high[-1]), bounds_error=False)
 
         # ---------------------------
         # Heat Capacity Ratio (gamma) interpolation
@@ -574,8 +574,8 @@ class CosmicShoreline:
         - F_xuv_to_earth: XUV flux relative to Earth's
         - pl_masse: Planet mass in Earth masses
         - pl_radiuse: Planet radius in Earth radii
-        - model: N2O2 escape model to use ('N22' or 'CR24')
-        - frac: If 'CR24' model is used, the fraction of the range between the low and high cut values to use
+        - model: N2O2 escape model to use ('N22' or 'CP24')
+        - frac: If 'CP24' model is used, the fraction of the range between the low and high cut values to use
         """
         if model == 'N22':
             if pl_masse !=1:
@@ -589,7 +589,7 @@ class CosmicShoreline:
             
             loss_rate_kg_sm2 = 10**(self.log_N2O2_loss_kg_sm2_interpolator(np.log10(F_xuv_to_earth)))
             M_dot = loss_rate_kg_sm2*(4*np.pi*(6.637e6)**2)
-        elif model == 'CR24':
+        elif model == 'CP24':
             if np.isscalar(F_xuv_to_earth):
                 F_xuv_to_earth = max(1e-10, F_xuv_to_earth)
                 Fxuv = np.array([F_xuv_to_earth])
@@ -605,26 +605,26 @@ class CosmicShoreline:
             if pl_radiuse=="":
                 pl_radiuse = self.M_R_fit(pl_masse)
                 
-            low_cut_low_log = self.CR24_N2O2_low_cut_interp_low(5.9)*np.ones_like(pl_masse)
-            low_cut_low_log[pl_masse < 5.9] = self.CR24_N2O2_low_cut_interp_low(pl_masse[pl_masse < 5.9])
+            low_cut_low_log = self.CP24_N2O2_low_cut_interp_low(5.9)*np.ones_like(pl_masse)
+            low_cut_low_log[pl_masse < 5.9] = self.CP24_N2O2_low_cut_interp_low(pl_masse[pl_masse < 5.9])
 
-            high_cut_low_log = self.CR24_N2O2_high_cut_interp_low(5.9)*np.ones_like(pl_masse)
-            high_cut_low_log[pl_masse < 5.9] = self.CR24_N2O2_high_cut_interp_low(pl_masse[pl_masse < 5.9])
+            high_cut_low_log = self.CP24_N2O2_high_cut_interp_low(5.9)*np.ones_like(pl_masse)
+            high_cut_low_log[pl_masse < 5.9] = self.CP24_N2O2_high_cut_interp_low(pl_masse[pl_masse < 5.9])
 
-            loss_rate_EL = 10**self.CR24_N2O2_EL_interp(np.log10(Fxuv), pl_masse)
+            loss_rate_EL = 10**self.CP24_N2O2_EL_interp(np.log10(Fxuv), pl_masse)
 
-            low_cut_high_log = self.CR24_N2O2_low_cut_interp_high(5.9)*np.ones_like(pl_masse)
-            low_cut_high_log[pl_masse < 5.9] = self.CR24_N2O2_low_cut_interp_high(pl_masse[pl_masse < 5.9])
+            low_cut_high_log = self.CP24_N2O2_low_cut_interp_high(5.9)*np.ones_like(pl_masse)
+            low_cut_high_log[pl_masse < 5.9] = self.CP24_N2O2_low_cut_interp_high(pl_masse[pl_masse < 5.9])
 
-            high_cut_high_log = self.CR24_N2O2_high_cut_interp_high(5.9)*np.ones_like(pl_masse)
-            high_cut_high_log[pl_masse < 5.9] = self.CR24_N2O2_high_cut_interp_high(pl_masse[pl_masse < 5.9])
+            high_cut_high_log = self.CP24_N2O2_high_cut_interp_high(5.9)*np.ones_like(pl_masse)
+            high_cut_high_log[pl_masse < 5.9] = self.CP24_N2O2_high_cut_interp_high(pl_masse[pl_masse < 5.9])
 
 
             low_cut= 10**(low_cut_low_log + frac * (low_cut_high_log - low_cut_low_log))
             high_cut = 10**(high_cut_low_log + frac * (high_cut_high_log - high_cut_low_log))
 
-            loss_rate_low_logmax = self.CR24_N2O2_EL_interp(np.log10(high_cut[Fxuv > high_cut]), pl_masse[Fxuv > high_cut])
-            loss_rate_high_logmax = self.CR24_N2O2_EL_interp(np.log10(high_cut[Fxuv > high_cut]), pl_masse[Fxuv > high_cut])
+            loss_rate_low_logmax = self.CP24_N2O2_EL_interp(np.log10(high_cut[Fxuv > high_cut]), pl_masse[Fxuv > high_cut])
+            loss_rate_high_logmax = self.CP24_N2O2_EL_interp(np.log10(high_cut[Fxuv > high_cut]), pl_masse[Fxuv > high_cut])
 
             loss_rate = loss_rate_EL
             loss_rate[Fxuv < low_cut] = 1e-17
@@ -691,10 +691,6 @@ class CosmicShoreline:
 
         if pl_radiuse=="":
             pl_radiuse = self.M_R_fit(pl_masse)
-        if np.isscalar(F_xuv_to_earth):
-            F_xuv_to_earth = max(1e-10, F_xuv_to_earth)
-        else:
-            F_xuv_to_earth = np.maximum(F_xuv_to_earth, 1e-10)
 
         # e_lyman = 6.626e-34 * 2.47e15
         # flux_lyman_0 = 6.19e-3  # W/m2 # Ribas et al. 2005
@@ -706,7 +702,7 @@ class CosmicShoreline:
         F_xuv_earth = 0.00464 # W/m2 Ribas et al. 2005
         R_xuv = R_xuv_ratio * pl_radiuse
 
-        M_C_dot_energy = 12/16 * (epsilon * np.pi * F_xuv_to_earth * F_xuv_earth * (R_xuv *  6.37e6)**3) / (6.67e-11 * pl_masse * 5.97e24 * K_tide)
+        M_C_dot_energy = 12/16 * (epsilon * np.pi * F_xuv_to_earth * F_xuv_earth * pl_radiuse**2*R_xuv *  (6.37e6)**3) / (6.67e-11 * pl_masse * 5.97e24 * K_tide)
         # if lyman_or_energy == 1:
         #     return M_C_dot_lyman
         # elif lyman_or_energy == 2:
@@ -757,8 +753,8 @@ class CosmicShoreline:
         nonthermal (bool): Whether to calculate non-thermal escape
         R_star (float): The radius of the star in Solar radii
         idx_SolarWind (float): The power-law index for the mass loss rate scaling
-        low_or_high (bool): If 'CR24' model is used, whether to use the low or high cut values
-        frac (float): If 'CR24' model is used, the fraction of the range between the low and high cut values to use
+        low_or_high (bool): If 'CP24' model is used, whether to use the low or high cut values
+        frac (float): If 'CP24' model is used, the fraction of the range between the low and high cut values to use
         """
 
         
