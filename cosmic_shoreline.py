@@ -71,7 +71,10 @@ class CosmicShoreline:
         self.j12_starmasses_x = np.load(f'{data_path}j12_starmasses.npy')
         self.j12_ages_y = np.load(f'{data_path}j12_ages.npy')
         self.j12_Lx_over_Lbol = np.load(f'{data_path}j12_LXUV_over_Lbol.npy')
-        self.guinan16_Lx = np.load(f'{data_path}guinan16_Lx.npy')
+        
+        self.guinan16_Lx_over_Lbol = np.load('./data-interpolation/guinan16_Lx_over_Lbol.npy')
+        self.guinan16_mass_range = np.load('./data-interpolation/guinan16_mass_range.npy')
+        self.guinan16_ages = np.load('./data-interpolation/guinan16_ages.npy')
 
         # ----------------------------------------
         # Load data for L_bol and R_star interpolation (B15) (Baraffe et al. 2015)
@@ -374,13 +377,11 @@ class CosmicShoreline:
                     bounds_error=False, fill_value='extrapolate'
                 )(np.log10(time_XUV))
             else:
-                L_X = 10 ** scipy.interpolate.interp1d(
-                    np.log10(self.j12_ages_y),
-                    np.log10(self.guinan16_Lx),
+                idx = np.argmin(np.abs(self.guinan16_mass_range - Ms))
+                L_X_to_bol = 10**scipy.interpolate.interp1d(
+                    np.log10(self.guinan16_ages), np.log10(self.guinan16_Lx_over_Lbol[idx, :]),
                     bounds_error=False, fill_value='extrapolate'
                 )(np.log10(time_XUV))
-                L_bol = 3.827e26 * 10 ** self.L_bol_interpolator_B15((Ms, np.log10(time_XUV)))
-                L_X_to_bol = L_X / L_bol
         return L_X_to_bol
     
     def calculate_L_XUV(self, Ms, time_XUV, method='Jackson', output='single',
@@ -587,7 +588,7 @@ class CosmicShoreline:
             else:
                 F_xuv_to_earth = np.maximum(F_xuv_to_earth, 1e-10)
             
-            loss_rate_kg_sm2 = 10**(self.log_N2O2_loss_kg_sm2_interpolator(np.log10(F_xuv_to_earth)))
+            loss_rate_kg_sm2 = 28/29*10**(self.log_N2O2_loss_kg_sm2_interpolator(np.log10(F_xuv_to_earth)))
             M_dot = loss_rate_kg_sm2*(4*np.pi*(6.637e6)**2)
         elif model == 'CP24':
             if np.isscalar(F_xuv_to_earth):
