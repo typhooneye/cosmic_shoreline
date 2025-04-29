@@ -4,10 +4,10 @@
 
 * Atmospheric Retention Targets Ranked by Priority Metric for CO2-Dominated Atmospheres
 
-|  |  |  |  |  |  |  |  |  |  |  |  |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| Planet | |||| $R_p$ | $M_p$ | $v_{esc}$ | $\rho_{\oplus,s}$  | $M_*$ | $T_{eq}$ | \textbf{K}-mag | $(R_{p}/R_{s})^{2}$ | ESM | TSM |
-|  | [\ch{CO2}] | [\ch{CH4}] | [\ch{N2}] | $(R_\oplus)$ | $(M_\oplus)$ | (km/s) | ($\rho_{\oplus,s}$) | $(M_\odot)$ | (K) |  | (ppm) |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Planet |  |  |  | $R_p$ | $M_p$ | $v_{esc}$ | $\rho$ \footnote{the density scaled to that of a planet with Earth-like composition} | $M_*$ | $T_{eq}$ | extbf{K}-mag | $(R_{p}/R_{s})^{2}$ | ESM\footnote{Emission spectroscopy metric from \cite{kempton_framework_2018}} | TSM\footnote{Transmission spectroscopy metric from \cite{kempton_framework_2018}} |
+|  | CO2 | CH4 | N2 | $(R_\oplus)$ | $(M_\oplus)$ | (km/s) | ($\rho^{*}_{\oplus}$) | $(M_\odot)$ | (K) |  | (ppm) |  |  |
 | LHS 1140 b | 3.13 | 1.14 | 2.30 | 1.73 | 5.60 | 20.1 | 0.77 | 0.18 | 225 | 8.8 | 5397 | 0.1 | 67 |
 | TOI-1452 b | 2.38 | 0.59 | 1.63 | 1.67 | 4.82 | 19.0 | 0.77 | 0.25 | 322 | 9.7 | 3107 | 0.6 | 39 |
 | TOI-198 b | 2.33 | 0.65 | 1.74 | 1.44 | 3.82$^{\dagger}$ | 18.2$^{\dagger}$ | 1$^{\dagger}$ | 0.47 | 368 | 7.9 | 896 | 0.6 | 5$^{\dagger}$ |
@@ -102,5 +102,6 @@
 | K2-157 b | -1.91 | -2.53 | -2.59 | 1.00 | 1.01$^{\dagger}$ | 11.2$^{\dagger}$ | 1$^{\dagger}$ | 0.94 | 2601 | 11.0 | 109 | 1.3 | 3$^{\dagger}$ |
 | K2-137 b | -3.11 | -3.60 | -4.04 | 0.64 | 0.22$^{\dagger}$ | 6.5$^{\dagger}$ | 1$^{\dagger}$ | 0.46 | 1471 | 10.9 | 409 | 3.5 | 18$^{\dagger}$ |
 
+The scores for each atmospheric composition represent the difference in the base-10 logarithm of instellation between the planet and the cosmic shorelines for a 1 wt\% volatile mass fraction at a given planetary mass. More negative values are more atmosphere-favorable. $^{\dagger}$These planets lack a measured mass value and we assume an Earth-like composition for these calculations. $^{*}$These planets have been suggested to have no thick atmosphere based on thermal emission observations. We do not take the individual constrained stellar age into account, and the score is obtained by assuming an stellar age distribution from \cite{berger_gaiakepler_2020}.
 
 
