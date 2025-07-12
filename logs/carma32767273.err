@@ -1,0 +1,5 @@
+Exception ignored in: <function Pool.__del__ at 0x7fca78249440>
+Traceback (most recent call last):
+  File "/software/python-anaconda-2023.09-el8-x86_64/lib/python3.11/multiprocessing/pool.py", line 271, in __del__
+  File "/software/python-anaconda-2023.09-el8-x86_64/lib/python3.11/multiprocessing/queues.py", line 371, in put
+AttributeError: 'NoneType' object has no attribute 'dumps'

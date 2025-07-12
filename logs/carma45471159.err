@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/tmp/slurmd/job45471159/slurm_script", line 11, in <module>
+    from altair import sample
+ModuleNotFoundError: No module named 'altair'

@@ -18,7 +18,6 @@ import scipy
 import scipy.interpolate
 import scipy.integrate
 import pandas as pd
-
 # -----------------------------------------------------------------------------
 # Helper class for extended linear ND interpolation with fallback to nearest
 # -----------------------------------------------------------------------------
@@ -72,9 +71,9 @@ class CosmicShoreline:
         self.j12_ages_y = np.load(f'{data_path}j12_ages.npy')
         self.j12_Lx_over_Lbol = np.load(f'{data_path}j12_LXUV_over_Lbol.npy')
         
-        self.guinan16_Lx_over_Lbol = np.load('./data-interpolation/guinan16_Lx_over_Lbol.npy')
-        self.guinan16_mass_range = np.load('./data-interpolation/guinan16_mass_range.npy')
-        self.guinan16_ages = np.load('./data-interpolation/guinan16_ages.npy')
+        self.guinan16_Lx_over_Lbol = np.load(f'{data_path}guinan16_Lx_over_Lbol.npy')
+        self.guinan16_mass_range = np.load(f'{data_path}guinan16_mass_range.npy')
+        self.guinan16_ages = np.load(f'{data_path}guinan16_ages.npy')
 
         # ----------------------------------------
         # Load data for L_bol and R_star interpolation (B15) (Baraffe et al. 2015)
@@ -287,14 +286,14 @@ class CosmicShoreline:
         self.CP24_N2O2_low_cut_interp_high = scipy.interpolate.interp1d(pl_masse_arr, log_fxuv_low_limit_high, fill_value=(log_fxuv_low_limit_high[0], log_fxuv_low_limit_high[-1]), bounds_error=False)
         self.CP24_N2O2_high_cut_interp_high = scipy.interpolate.interp1d(pl_masse_arr, log_fxuv_high_limit_high, fill_value=(log_fxuv_high_limit_high[0], log_fxuv_high_limit_high[-1]), bounds_error=False)
 
-        # ---------------------------
-        # Heat Capacity Ratio (gamma) interpolation
-        # ---------------------------
-        # Read the file into a pandas DataFrame
-        file_path = f'{data_path}gamma_CO2_CEA.txt'
-        data = pd.read_csv(file_path, sep='\s+', header=None, names=['t', 'p', 'gam'],skiprows=1)
+        # # ---------------------------
+        # # Heat Capacity Ratio (gamma) interpolation
+        # # ---------------------------
+        # # Read the file into a pandas DataFrame
+        # file_path = f'{data_path}gamma_CO2_CEA.txt'
+        # data = pd.read_csv(file_path, sep='\s+', header=None, names=['t', 'p', 'gam'],skiprows=1)
 
-        self.interp_gamma_T_logP = LinearNDInterpolatorExt(list(zip(data['t'], np.log10(data['p']*1e5))), data['gam'])
+        # self.interp_gamma_T_logP = LinearNDInterpolatorExt(list(zip(data['t'], np.log10(data['p']*1e5))), data['gam'])
 
         # ---------------------------
         # Magma Depth Initialization
@@ -821,7 +820,58 @@ class CosmicShoreline:
         else:
             return time_array, carbon_loss_rates, total_carbon_loss
         
-    def calculate_pl_teq(self, pl_orbsmax, st_mass, time=5e9, albedo=0.0):
+
+    def calculate_Cp_CO2(self, T):
+        """
+        Calculate the specific heat ratio (gamma) for CO2 at a given temperature T.
+        
+        Parameters:
+        T (float or array-like): Temperature in Kelvin.
+        
+        Returns:
+        float or array-like: Specific heat ratio (gamma) for CO2.
+        """
+        # 298 < Temp < 1200 K
+        A1 = 24.99735
+        B1 = 55.18696
+        C1 = -33.69137
+        D1 = 7.948387
+        E1 = -0.136638
+
+        # 1200 < Temp < 6000 K
+        A2 = 58.16639
+        B2 = 2.720074
+        C2 = -0.492289
+        D2 = 0.038844
+        E2 = -6.447293
+
+        if np.isscalar(T):
+            if T < 1200:
+                A, B, C, D, E = A1, B1, C1, D1, E1
+            elif 1200 <= T:
+                A, B, C, D, E = A2, B2, C2, D2, E2
+            else:
+                raise ValueError("Temperature out of range for CO2 gamma calculation.")
+            temp = T/1000
+            Cp = A + B * temp + C * temp**2 + D * temp**3 + E / temp**2
+        else:
+            A = np.ones_like(T) * A2
+            B = np.ones_like(T) * B2
+            C = np.ones_like(T) * C2
+            D = np.ones_like(T) * D2
+            E = np.ones_like(T) * E2
+
+            A[T < 1200] = A1
+            B[T < 1200] = B1
+            C[T < 1200] = C1
+            D[T < 1200] = D1
+            E[T < 1200] = E1
+
+            temp = T/1000
+            Cp = A + B * temp + C * temp**2 + D * temp**3 + E / temp**2
+        return Cp
+    
+    def calculate_pl_teq(self, pl_orbsmax, st_mass, time=5e9):
         """
         Calculate the Equilibrium temperature of a planet based on its orbital distance.
 
@@ -838,16 +888,16 @@ class CosmicShoreline:
         S0 = 1361  # Solar constant in W/m^2
         L_bol_to_sun = 10**self.L_bol_interpolator_B15((st_mass, np.log10(time)))
         # Calculate the planet's Equilibrium temperature
-        pl_teq = ((1/4) * L_bol_to_sun * (1-albedo) * S0 / (pl_orbsmax**2 * sigma))**(1/4)
+        pl_teq = ((1/4) * L_bol_to_sun * S0 / (pl_orbsmax**2 * sigma))**(1/4)
         
         return pl_teq
 
-    def calculate_pl_orbsmax(self, pl_teq, st_mass, time=5e9, albedo=0.0):
+    def calculate_pl_orbsmax(self, pl_teq, st_mass, time=5e9):
         """
         Calculate the orbital distance of a planet based on its Equilibrium temperature.
 
         Parameters:
-        pl_teff (float): The Equilibrium temperature of the planet in K
+        pl_teq (float): The Equilibrium temperature of the planet in K
         st_mass (float): The mass of the star in solar masses
         time (float): The age of the star in years (default: 1e9)
         albedo (float): The planet's albedo (default: 0.3)
@@ -859,7 +909,7 @@ class CosmicShoreline:
         S0 = 1361  # Solar constant in W/m^2
         L_bol_to_sun = 10**self.L_bol_interpolator_B15((st_mass, np.log10(time)))
         # Calculate the planet's orbital distance
-        pl_orbsmax = ((1/4) * L_bol_to_sun * (1-albedo) * S0 / (pl_teq**4 * sigma))**(1/2)
+        pl_orbsmax = ((1/4) * L_bol_to_sun * S0 / (pl_teq**4 * sigma))**(1/2)
         
         return pl_orbsmax
     
@@ -898,20 +948,22 @@ class CosmicShoreline:
             pl_radiuse = self.M_R_fit(pl_masse)
         
         g = 9.8 * (pl_masse) / (pl_radiuse)**2  # Calculate g from pl_masse
-        T_rcb = (1-albedo)**(0.25)*pl_teq
+        T_rcb = (1-albedo)**(0.25)*pl_teq*(1/2)**(1/4)  
         if p_RCB_cal == 1:
             if gamma is None:
                 if pl_psurf<p_RCB:
                     return T_rcb
                 def integrate_temperature(p_rcb, T_rcb, p_surf):
-                    def dry_adiabat_equation(p, T, gamma_interp):
+                    def dry_adiabat_equation(p, T):
                         """
                         dT/dp = (gamma - 1)/gamma * (T / p)
                         """
-                        gamma_val = gamma_interp(T,np.log10(p))  # T is a 1-element array
-                        return ((gamma_val - 1)/gamma_val) * (T/p)
+                        # gamma_val = gamma_interp(T,np.log10(p))  # T is a 1-element array
+                        Cp_val = self.calculate_Cp_CO2(T)
+                        R = 8.31446261815324  # J/(mol*K)
+                        return R/Cp_val * (T/p)
                     def odefun(p, T):
-                        return dry_adiabat_equation(p, T, self.interp_gamma_T_logP)
+                        return dry_adiabat_equation(p, T)
                     
                     sol = scipy.integrate.solve_ivp(
                         fun=odefun,
@@ -981,7 +1033,7 @@ class CosmicShoreline:
         Returns:
         z_rad: transit radius of the planet in m
         '''
-        T_rcb = (1-albedo)**(0.25)*pl_teq
+        T_rcb = (1-albedo)**(0.25)*pl_teq*(1/2)**(1/4)  # Calculate the temperature at the radiative-convective boundary
         if gamma is None:
             G=6.67430e-11
             R_gas = 8.314/(MMW*1e-3)
@@ -994,7 +1046,7 @@ class CosmicShoreline:
                 # Delta z = (R_s*T_iso / g) * ln(p_start/p_end).
                 return np.log(p_high / p_low)/(G*pl_masse*self.earth_mass/(R_gas*T_rcb))+one_r_low
             
-            def dry_adiabat_convective_ode(p, y, gamma_fn, R_gas, pl_masse):
+            def dry_adiabat_convective_ode(p, y, R_gas, pl_masse):
                 """
                 ODE for convective (dry adiabatic) region.
                 p : float (independent variable)
@@ -1004,16 +1056,20 @@ class CosmicShoreline:
                 returns d[T, 1/r]/dp
                 """
                 T, one_r = y
-                gamma_val = gamma_fn(T,np.log10(p)) # Evaluate gamma at (p, T)
+                # gamma_val = gamma_fn(T,np.log10(p)) # Evaluate gamma at (p, T)
                 # (Check for NaN or out-of-bounds if needed.)
+
+                Cp_val = self.calculate_Cp_CO2(T)
+                R = 8.31446261815324  # J/(mol*K)
+                gamma_val = 1/(1 - R/Cp_val)  # Calculate
                 
-                dTdp = (gamma_val - 1)/gamma_val * T/p
+                dTdp = R/Cp_val * T/p
                 d1_rdp = (R_gas * T) / (p * G * pl_masse * self.earth_mass)
                 return [dTdp, d1_rdp]
             
 
             def ode_wrap(p, y):
-                return dry_adiabat_convective_ode(p, y, self.interp_gamma_T_logP, R_gas, pl_masse)
+                return dry_adiabat_convective_ode(p, y, R_gas, pl_masse)
             
             def get_z_atm(pl_P_surf):
                 if (inversion == True) and pl_P_surf>1e7:
@@ -1267,7 +1323,7 @@ class CosmicShoreline:
 
         G = 6.67430e-11
         R_gas = 8.314/(MMW*1e-3)
-        T_rcb = (1-albedo)**(0.25)*pl_teq
+        T_rcb = (1-albedo)**(0.25)*pl_teq*(1/2)**(1/4)  # Calculate the temperature at the radiative-convective boundary
         P_output = np.logspace(np.log10(P_rad), np.log10(P_surf), 100)
         T_output = np.zeros_like(P_output)
         z_output = np.zeros_like(P_output)
@@ -1280,7 +1336,7 @@ class CosmicShoreline:
             # Delta z = (R_s*T_iso / g) * ln(p_start/p_end).
             return np.log(p_high / p_low)/(G*pl_masse*self.earth_mass/(R_gas*T_eff))+one_r_low
         
-        def dry_adiabat_convective_ode(p, y, gamma_fn, R_gas, pl_masse):
+        def dry_adiabat_convective_ode(p, y, R_gas, pl_masse):
             """
             ODE for convective (dry adiabatic) region.
             p : float (independent variable)
@@ -1290,15 +1346,19 @@ class CosmicShoreline:
             returns d[T, 1/r]/dp
             """
             T, one_r = y
-            gamma_val = gamma_fn(T,np.log10(p)) # Evaluate gamma at (p, T)
+            # gamma_val = gamma_fn(T,np.log10(p)) # Evaluate gamma at (p, T)
             # (Check for NaN or out-of-bounds if needed.)
 
-            dTdp = (gamma_val - 1)/gamma_val * T/p
+            Cp_val = self.calculate_Cp_CO2(T)
+            R = 8.31446261815324  # J/(mol*K)
+            gamma_val = 1/(1 - R/Cp_val)  # Calculate
+
+            dTdp = R/Cp_val * T/p
             d1_rdp = (R_gas * T) / (p * G * pl_masse * self.earth_mass)
             return [dTdp, d1_rdp]
 
         def ode_wrap(p, y):
-            return dry_adiabat_convective_ode(p, y, self.interp_gamma_T_logP, R_gas, pl_masse)
+            return dry_adiabat_convective_ode(p, y, R_gas, pl_masse)
 
         if (inversion == True) and P_surf>1e7:
             # calculate the temperature, and (1/r_base-1/_r_rcb) at the base of convective layer
@@ -1355,7 +1415,6 @@ class CosmicShoreline:
                                                                         T_rcb, R_gas, pl_masse)-pl_rade*self.earth_radius
         return P_output, T_output, z_output
     
-
 # -----------------------------------------------------------------------------
 # Example usage when run as a script
 # -----------------------------------------------------------------------------

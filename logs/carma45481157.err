@@ -1,0 +1,7 @@
+/tmp/slurmd/job45481157/slurm_script:184: RuntimeWarning: overflow encountered in power
+  N_T = 10**scipy.interpolate.interp1d(k_conf_teq[:,0],np.log10(sample_size),bounds_error=False,fill_value='extrapolate')(0)
+Exception ignored in: <function Pool.__del__ at 0x7faeba3a4550>
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 268, in __del__
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 372, in put
+AttributeError: 'NoneType' object has no attribute 'dumps'

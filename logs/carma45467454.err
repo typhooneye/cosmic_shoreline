@@ -1,0 +1,311 @@
+/home/xuanji/miniconda3/lib/python3.10/site-packages/pytools/persistent_dict.py:52: RecommendedHashNotFoundWarning: Unable to import recommended hash 'siphash24.siphash13', falling back to 'hashlib.sha256'. Run 'python3 -m pip install siphash24' to install the recommended hash.
+  warn("Unable to import recommended hash 'siphash24.siphash13', "
+Process ForkPoolWorker-1:
+Process ForkPoolWorker-2:
+Process ForkPoolWorker-3:
+Process ForkPoolWorker-4:
+Process ForkPoolWorker-5:
+Process ForkPoolWorker-6:
+Process ForkPoolWorker-7:
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+Process ForkPoolWorker-8:
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+Process ForkPoolWorker-11:
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+Process ForkPoolWorker-9:
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+Process ForkPoolWorker-10:
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+Process ForkPoolWorker-12:
+Process ForkPoolWorker-13:
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+Traceback (most recent call last):
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process ForkPoolWorker-14:
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+Process ForkPoolWorker-15:
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+Process ForkPoolWorker-16:
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+Process ForkPoolWorker-17:
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+Process ForkPoolWorker-18:
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+Process ForkPoolWorker-19:
+Traceback (most recent call last):
+Process ForkPoolWorker-20:
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+Process ForkPoolWorker-21:
+Process ForkPoolWorker-22:
+Process ForkPoolWorker-23:
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+Process ForkPoolWorker-24:
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+Process ForkPoolWorker-25:
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+Process ForkPoolWorker-26:
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+Process ForkPoolWorker-27:
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+Process ForkPoolWorker-28:
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+Traceback (most recent call last):
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/pool.py", line 114, in worker
+    task = get()
+  File "/home/xuanji/miniconda3/lib/python3.10/multiprocessing/queues.py", line 368, in get
+    return _ForkingPickler.loads(res)
+AttributeError: Can't get attribute 'k_bootstrap_Mp_Rp' on <module '__main__' from '/tmp/slurmd/job45467454/slurm_script'>
+slurmstepd-midway2-0290: error: *** JOB 45467454 ON midway2-0290 CANCELLED AT 2025-07-07T17:28:56 ***

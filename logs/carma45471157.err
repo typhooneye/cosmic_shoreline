@@ -1,0 +1,4 @@
+  File "/tmp/slurmd/job45471157/slurm_script", line 208
+    `
+    ^
+SyntaxError: invalid syntax
