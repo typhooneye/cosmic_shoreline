@@ -20,6 +20,11 @@ def k_bootstrap_Mp_Rp(
 ):
     from scipy.stats import linregress
     import numpy as np
+
+    from cosmic_shoreline import CosmicShoreline
+
+    cs = CosmicShoreline(data_path='./data-interpolation/')
+
     """
     Evaluate how linear regression parameters vary with sample size using bootstrap.
     
@@ -85,7 +90,7 @@ def k_bootstrap_Mp_Rp(
 
         # Get the mean and confidence intervals (90%)
         slope_mean = np.mean(boot_slopes)
-        slope_conf = np.percentile(boot_slopes, [2.5,  97.5])
+        slope_conf = np.percentile(boot_slopes, [10, 90])
         
         slope_mean_arr[i] = slope_mean
         slope_conf_arr[i] = slope_conf
@@ -111,25 +116,19 @@ if __name__ == '__main__':
     # %%
     # Define the function to calculate remaining mass
 
-    prefix = '_gamma'
+    prefix = '_insol'
     earth_mass = 5.972e24  # in kg
     earth_radius = 6.371e6  # in m
 
-    module_dir = os.path.abspath('/project/abbot/xuanji/2.Cosmic-Shoreline/cosmic_shoreline')
-
-    # Add the directory to sys.path
-    sys.path.insert(0, module_dir) # Use insert(0, ...) to prioritize this path
-
-
     from cosmic_shoreline import CosmicShoreline
 
-    cs = CosmicShoreline(data_path='/project/abbot/xuanji/2.Cosmic-Shoreline/cosmic_shoreline/data-interpolation/')
+    cs = CosmicShoreline(data_path='./data-interpolation/')
 
-    data_no_comp = pd.read_csv('/project/abbot/xuanji/2.Cosmic-Shoreline/cosmic_shoreline/data-montecarlo/rho_data_no_comp%s.csv'% prefix)
-    data_1sigma = pd.read_csv('/project/abbot/xuanji/2.Cosmic-Shoreline/cosmic_shoreline/data-montecarlo/rho_data_1sigma%s.csv'% prefix)
-    data_3sigma = pd.read_csv('/project/abbot/xuanji/2.Cosmic-Shoreline/cosmic_shoreline/data-montecarlo/rho_data_3sigma%s.csv'% prefix)
-    data_uni = pd.read_csv('/project/abbot/xuanji/2.Cosmic-Shoreline/cosmic_shoreline/data-montecarlo/rho_data_uni%s.csv'% prefix)
-    data_uni_rho = pd.read_csv('/project/abbot/xuanji/2.Cosmic-Shoreline/cosmic_shoreline/data-montecarlo/rho_data_uni_rho%s.csv'% prefix)
+    data_no_comp = pd.read_csv('./data-montecarlo/rho_data_no_comp%s.csv'% prefix)
+    data_1sigma = pd.read_csv('./data-montecarlo/rho_data_1sigma%s.csv'% prefix)
+    data_3sigma = pd.read_csv('./data-montecarlo/rho_data_3sigma%s.csv'% prefix)
+    data_uni = pd.read_csv('./data-montecarlo/rho_data_uni%s.csv'% prefix)
+    data_uni_rho = pd.read_csv('./data-montecarlo/rho_data_uni_rho%s.csv'% prefix)
 
 
     # create pool of ncpus workers
@@ -140,18 +139,33 @@ if __name__ == '__main__':
         num_processes = multiprocessing.cpu_count()
     p = multiprocessing.Pool(num_processes)
 
+    print("Number of processes: ", num_processes)
+
 
 
     # %%
     from scipy.stats import linregress
     # # %%
-    # # # # it takes 6 mins to run
+
+
+    # report the time taken
+    import time
+    start_time = time.time()
+
+    k_teq, k_conf_teq = k_bootstrap_Mp_Rp(data_no_comp['pl_teq'], data_no_comp['pl_masse'], data_no_comp['pl_rade_transit_upper'], 
+                                np.logspace(1, 3.5, 20).astype(int), 1000, 0, 0)
+    N_T = 10**scipy.interpolate.interp1d(k_conf_teq[:,0],np.log10(np.logspace(1, 3.5, 20).astype(int)),bounds_error=False,fill_value='extrapolate')(0)
+    print("N_T for no_comp: ", N_T)
+
+
     sample_size = np.logspace(1, 3.5, 10).astype(int)
-    mass_err_mu = np.logspace(-2, 0, 20)
-    rad_err_mu = np.logspace(-3, -1, 20)
+    mass_err_mu = np.logspace(-2, -0.5, 50)
+    rad_err_mu = np.logspace(-2.5, -1, 50)
     N_T_max = np.zeros([len(mass_err_mu),len(rad_err_mu)])
 
     input_items= []
+
+    start_time = time.time()
 
     for i, mass_err in enumerate(mass_err_mu):
         for j, rad_err in enumerate(rad_err_mu):
@@ -160,37 +174,49 @@ if __name__ == '__main__':
             
 
     results = p.starmap(k_bootstrap_Mp_Rp, input_items)
+    
+
+
 
     for i, (k_teq, k_conf_teq) in enumerate(results):
         N_T = 10**scipy.interpolate.interp1d(k_conf_teq[:,0],np.log10(sample_size),bounds_error=False,fill_value='extrapolate')(0)
         N_T_max[i//len(rad_err_mu), i%len(rad_err_mu)] = N_T
 
-    np.save('/project/abbot/xuanji/2.Cosmic-Shoreline/cosmic_shoreline/data-montecarlo/N_T_max_no_comp%s.npy'%prefix,N_T_max)
+    np.save('./data-montecarlo/N_T_max_no_comp%s.npy'%prefix,N_T_max)
+
+    
+    # print the time taken
+    print("Time taken for task1: %s seconds" % (time.time() - start_time))
+
     #================================================================
 
-    sample_size = np.logspace(3, 4, 10).astype(int)
-    mass_err_mu = np.logspace(-3, -0.5,50)
-    rad_err_mu = np.logspace(-3, -1,50)
-    N_T_max = np.zeros([len(mass_err_mu),len(rad_err_mu)])
+    # start_time = time.time()
 
-    input_items= []
+    # sample_size = np.logspace(3, 4, 20).astype(int)
+    # mass_err_mu = np.logspace(-2, -0.5, 50)
+    # rad_err_mu = np.logspace(-2.5, -1, 50)
+    # N_T_max = np.zeros([len(mass_err_mu),len(rad_err_mu)])
 
-    for i, mass_err in enumerate(mass_err_mu):
-        for j, rad_err in enumerate(rad_err_mu):
-            input_items.append((data_1sigma['pl_teq'], data_1sigma['pl_masse'], data_1sigma['pl_rade_transit_upper'], 
-                                sample_size, 1000, mass_err, rad_err))
-    results = p.starmap(k_bootstrap_Mp_Rp, input_items)
-    for i, (k_teq, k_conf_teq) in enumerate(results):
-        N_T = 10**scipy.interpolate.interp1d(k_conf_teq[:,0],np.log10(sample_size),bounds_error=False,fill_value='extrapolate')(0)
-        N_T_max[i//len(rad_err_mu), i%len(rad_err_mu)] = N_T
+    # input_items= []
 
-    np.save('/project/abbot/xuanji/2.Cosmic-Shoreline/cosmic_shoreline/data-montecarlo/N_T_max_1sigma%s.npy'%prefix,N_T_max)
-    #================================================================
+    # for i, mass_err in enumerate(mass_err_mu):
+    #     for j, rad_err in enumerate(rad_err_mu):
+    #         input_items.append((data_1sigma['pl_teq'], data_1sigma['pl_masse'], data_1sigma['pl_rade_transit_upper'], 
+    #                             sample_size, 1000, mass_err, rad_err))
+    # results = p.starmap(k_bootstrap_Mp_Rp, input_items)
+    # for i, (k_teq, k_conf_teq) in enumerate(results):
+    #     N_T = 10**scipy.interpolate.interp1d(k_conf_teq[:,0],np.log10(sample_size),bounds_error=False,fill_value='extrapolate')(0)
+    #     N_T_max[i//len(rad_err_mu), i%len(rad_err_mu)] = N_T
 
+    # np.save('./data-montecarlo/N_T_max_1sigma%s.npy'%prefix,N_T_max)
 
+    # print("Time taken for task2: %s seconds" % (time.time() - start_time))
+    # #================================================================
+
+    start_time = time.time()
     sample_size = np.logspace(1, 4, 10).astype(int)
-    mass_err_mu = np.logspace(-3, -0.5,50)
-    rad_err_mu = np.logspace(-3, -1,50)
+    mass_err_mu = np.logspace(-2, -0.5, 50)
+    rad_err_mu = np.logspace(-2.5, -1, 50)
     N_T_max = np.zeros([len(mass_err_mu),len(rad_err_mu)])
 
     input_items= []
@@ -203,5 +229,6 @@ if __name__ == '__main__':
         N_T = 10**scipy.interpolate.interp1d(k_conf_teq[:,0],np.log10(sample_size),bounds_error=False,fill_value='extrapolate')(0)
         N_T_max[i//len(rad_err_mu), i%len(rad_err_mu)] = N_T
 
-    np.save('/project/abbot/xuanji/2.Cosmic-Shoreline/cosmic_shoreline/data-montecarlo/N_T_max_3sigma%s.npy'%prefix,N_T_max)
+    np.save('./data-montecarlo/N_T_max_3sigma%s.npy'%prefix,N_T_max)
+    print("Time taken for task3: %s seconds" % (time.time() - start_time))
     #================================================================

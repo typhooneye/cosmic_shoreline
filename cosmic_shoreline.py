@@ -814,7 +814,7 @@ class CosmicShoreline:
                                               frac=frac)
         # Calculate the total carbon loss using vectorized operations
         # print(carbon_loss_rates)
-        total_carbon_loss = scipy.integrate.trapz(carbon_loss_rates,time_array) * 365.25 * 24 * 3600  # Convert years to seconds
+        total_carbon_loss = scipy.integrate.trapezoid(carbon_loss_rates,time_array) * 365.25 * 24 * 3600  # Convert years to seconds
         if output == 'single':
             return total_carbon_loss
         else:
