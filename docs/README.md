@@ -10,7 +10,7 @@ This folder contains a calculator for cumulative atmospheric loss.
 
 ## Usage
 
-Open `index.html` in a browser. Or use this link:
+Open `index.html` in a browser. Or use this link: https://typhooneye.github.io/cosmic_shoreline/
 
 ## Scope
 
