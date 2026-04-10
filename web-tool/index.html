@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cosmic Shoreline — Atmospheric Loss Calculator</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #fff; --surface: #f5f6fa; --border: #e0e2ea;
+      --accent: #3a6fd8; --text: #1a1d2e; --muted: #6b7280;
+      --font: 'Inter', system-ui, sans-serif;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.6; }
+
+    /* ── Layout ───────────────────────────────────────────────────── */
+    header { border-bottom: 1px solid var(--border); padding: 16px 28px; display: flex; align-items: baseline; gap: 14px; }
+    header h1 { font-size: 16px; font-weight: 600; }
+    header p  { color: var(--muted); font-size: 13px; }
+    .top-note { border-bottom: 1px solid var(--border); padding: 10px 28px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .layout { display: grid; grid-template-columns: 360px 1fr; height: calc(100vh - 53px); }
+
+    /* ── Sidebar ──────────────────────────────────────────────────── */
+    .sidebar { border-right: 1px solid var(--border); overflow-y: auto; padding: 20px 18px; display: flex; flex-direction: column; gap: 18px; }
+    .sec-label { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+    .mode-tabs { display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .mode-tab  { background: none; border: none; border-right: 1px solid var(--border); color: var(--muted); cursor: pointer; font-size: 12px; padding: 8px 4px; text-align: center; transition: all .15s; }
+    .mode-tab:last-child { border-right: none; }
+    .mode-tab.active { background: var(--accent); color: #fff; font-weight: 600; }
+    .choice-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .choice-btn { background: none; border: none; border-right: 1px solid var(--border); color: var(--muted); cursor: pointer; font-size: 12px; padding: 8px 4px; text-align: center; transition: all .15s; }
+    .choice-btn:last-child { border-right: none; }
+    .choice-btn.active { background: var(--accent); color: #fff; font-weight: 600; }
+    .choice-grid.two-col { grid-template-columns: 1fr 1fr; }
+    .mode-panel[hidden] { display: none !important; }
+    .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+    .field:last-child { margin-bottom: 0; }
+    label { font-size: 13px; }
+    .unit { color: var(--muted); font-size: 12px; margin-left: 3px; }
+    .field input, .field textarea { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; font-family: inherit; padding: 7px 10px; width: 100%; outline: none; transition: border-color .15s; resize: vertical; }
+    .field input:focus, .field textarea:focus { border-color: var(--accent); }
+    .hint { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .note-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-size: 12px; line-height: 1.55; padding: 10px 12px; }
+    .atm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+    .atm-btn { background: var(--bg); border: 1.5px solid var(--border); border-radius: 6px; color: var(--muted); cursor: pointer; font-size: 12px; padding: 7px 5px; text-align: center; transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 5px; }
+    .atm-btn .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+    .atm-btn.active { color: var(--text); font-weight: 500; }
+    .atm-btn[data-atm="CO2"].active       { border-color:#3a6fd8; background:#eef3fd; } .atm-btn[data-atm="CO2"].active .dot  { background:#3a6fd8; }
+    .atm-btn[data-atm="CH4"].active       { border-color:#d97706; background:#fef3e2; } .atm-btn[data-atm="CH4"].active .dot  { background:#d97706; }
+    .atm-btn[data-atm="H2O"].active       { border-color:#0891b2; background:#e0f6fb; } .atm-btn[data-atm="H2O"].active .dot  { background:#0891b2; }
+    .atm-btn[data-atm="N2O2_N22"].active  { border-color:#7c3aed; background:#f0ebfe; } .atm-btn[data-atm="N2O2_N22"].active .dot  { background:#7c3aed; }
+    .atm-btn[data-atm="N2O2_CP24"].active { border-color:#16a34a; background:#e8f8ee; } .atm-btn[data-atm="N2O2_CP24"].active .dot { background:#16a34a; }
+    .atm-btn.span2 { grid-column: span 2; }
+    .run-btn { background: var(--accent); border: none; border-radius: 8px; color: #fff; cursor: pointer; font-size: 14px; font-weight: 600; padding: 10px; width: 100%; transition: background .15s, opacity .15s; }
+    .run-btn:hover { background: #2d5ec0; } .run-btn:disabled { opacity: .45; cursor: not-allowed; }
+    .status-msg { font-size: 13px; color: var(--muted); min-height: 1.2em; }
+    .status-msg.error { color: #dc2626; }
+    hr.div { border: none; border-top: 1px solid var(--border); }
+
+    /* ── Main panel ───────────────────────────────────────────────── */
+    .main { display: flex; flex-direction: column; overflow: hidden; }
+    .summary-wrap { border-bottom: 1px solid var(--border); overflow-x: auto; max-height: 180px; display: none; }
+    .summary-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .summary-table th, .summary-table td { border: 1px solid var(--border); padding: 5px 10px; text-align: right; white-space: nowrap; }
+    .summary-table th { background: var(--surface); font-weight: 600; }
+    .summary-table td:first-child, .summary-table th:first-child { text-align: left; }
+    .chart-wrap { flex: 1; padding: 16px 22px; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+    .main-charts { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 0; }
+    .chart-panel { min-height: 0; display: flex; flex-direction: column; gap: 0; }
+    .chart-panel + .chart-panel { border-top: 3px solid var(--border); }
+    .chart-canvas-wrap { flex: 1; position: relative; min-height: 0; }
+    .bottom-panels { flex-shrink: 0; height: 202px; display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--border); }
+    .bottom-panel { border-right: 1px solid var(--border); padding: 10px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; overflow: hidden; }
+    .bottom-panel:last-child { border-right: none; }
+    .bottom-panel-title { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); flex-shrink: 0; }
+    .bottom-panel-canvas-wrap { position: relative; height: 149px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Cosmic Shoreline</h1>
+  <p>Cumulative atmospheric loss calculator</p>
+</header>
+
+<div class="top-note">
+  Due to the nonlinear dependence of hydrodynamic escape on XUV flux, lower cumulative XUV does not necessarily mean lower cumulative atmospheric loss.
+</div>
+
+<div class="layout">
+<aside class="sidebar">
+
+  <div>
+    <p class="sec-label">Star &amp; Planet Input</p>
+    <div class="mode-tabs" id="input-mode-tabs">
+      <button class="mode-tab" type="button" data-mode="manual">Input numbers</button>
+      <button class="mode-tab" type="button" data-mode="names">Planet names</button>
+      <button class="mode-tab active" type="button" data-mode="rocks">Rocky samples</button>
+    </div>
+  </div>
+
+  <div id="panel-manual" class="mode-panel" hidden>
+    <p class="sec-label">Input Numbers</p>
+    <div class="note-box" style="margin-bottom:12px;">
+      Enter one value or comma-separated arrays.
+      When using arrays, `st_mass`, `pl_masse`, `pl_radiuse`, and `pl_orbsmax` should have the same length so the calculator can evaluate planets one by one.
+    </div>
+    <div class="field">
+      <label>Stellar mass <span class="unit">M☉</span></label>
+      <input type="text" id="m-st_mass" value="1.0" inputmode="decimal" spellcheck="false" placeholder="e.g. 0.3, 0.5, 1.0" />
+      <span class="hint">Numbers only. Single value or comma-separated array.</span>
+    </div>
+    <div class="field">
+      <label>Planet mass <span class="unit">M⊕</span></label>
+      <input type="text" id="m-pl_masse" value="1.0" inputmode="decimal" spellcheck="false" placeholder="e.g. 0.8, 1.0, 1.2" />
+    </div>
+    <div class="field">
+      <label>Planet radius <span class="unit">R⊕</span></label>
+      <input type="text" id="m-pl_radiuse" inputmode="decimal" spellcheck="false" placeholder="Leave blank to compute from mass" />
+      <span class="hint">Leave blank to infer radius from the mass-radius relation.</span>
+    </div>
+    <div class="field">
+      <label>Orbital distance <span class="unit">AU</span></label>
+      <input type="text" id="m-pl_orbsmax" value="1.0" inputmode="decimal" spellcheck="false" placeholder="e.g. 0.03, 0.08, 1.0" />
+    </div>
+  </div>
+
+  <div id="panel-names" class="mode-panel" hidden>
+    <p class="sec-label">Input Planet Names</p>
+    <div class="note-box" style="margin-bottom:12px;">
+      Enter one or more planet names. The data will be read from
+      `NASAExoArchive_2025-02-28_aggregate.csv`, with planetary masses inferred
+      using the workflow in `03-21-25-Model-CS-Figures.ipynb`, section `2.2 Cosmic Shoreline: Planetary Mass`.
+    </div>
+    <div class="field">
+      <textarea id="n-names" rows="4" placeholder="e.g. TRAPPIST-1 b, GJ 1132 b, 55 Cnc e"></textarea>
+      <span class="hint">Comma-separated or newline-separated list.</span>
+    </div>
+    <div id="name-preview" style="font-size:12px;color:var(--muted);margin-top:4px;"></div>
+  </div>
+
+  <div id="panel-rocks" class="mode-panel">
+    <p class="sec-label">Rocky Samples</p>
+    <div class="note-box">
+      Plot rocky planets below the radius valley, following the criterion
+      described in Ji et al. 2025.
+    </div>
+  </div>
+
+  <hr class="div" />
+
+  <div>
+    <p class="sec-label">Atmosphere <span style="font-weight:400;text-transform:none;letter-spacing:0">(select one or more)</span></p>
+    <div class="note-box" style="margin-bottom:12px;">
+      `N₂/O₂ (N22)` and `H₂O` apply only to 1 Earth-mass planets.
+    </div>
+    <div class="atm-grid">
+      <button class="atm-btn active" data-atm="CO2"><span class="dot"></span>CO₂</button>
+      <button class="atm-btn" data-atm="CH4"><span class="dot"></span>CH₄</button>
+      <button class="atm-btn" data-atm="H2O"><span class="dot"></span>H₂O</button>
+      <button class="atm-btn" data-atm="N2O2_N22"><span class="dot"></span>N₂/O₂ (N22)</button>
+      <button class="atm-btn active" data-atm="N2O2_CP24"><span class="dot"></span>N₂/O₂ (CP24)</button>
+      <button class="atm-btn" data-atm="CUSTOM"><span class="dot"></span>Custom</button>
+    </div>
+    <div id="atm-custom-panel" class="mode-panel" hidden style="margin-top:10px;">
+      <div class="note-box" style="margin-bottom:10px;">
+        Enter a JS-style expression for escape rate in `kg/s` as a function of `F_xuv`.
+        Available variables: `F_xuv`, `pl_masse`, `pl_radiuse`.
+      </div>
+      <div class="field">
+        <label>Custom escape-rate function</label>
+        <input type="text" id="atm-custom-expression" value="1e6 * Math.pow(F_xuv, 0.5)" spellcheck="false" />
+        <span class="hint">Example: `1e6 * Math.pow(F_xuv, 0.5)`</span>
+      </div>
+    </div>
+  </div>
+
+  <hr class="div" />
+
+  <div>
+    <p class="sec-label">X-ray model <span style="font-weight:400;text-transform:none;letter-spacing:0">(select one or more)</span></p>
+    <div class="choice-grid" id="xray-tabs">
+      <button class="choice-btn active" type="button" data-xray="Jackson">Jackson+Guinan</button>
+      <button class="choice-btn" type="button" data-xray="Selsis">Selsis 2007</button>
+      <button class="choice-btn" type="button" data-xray="custom">Custom</button>
+    </div>
+    <div id="xray-custom-panel" style="display:none;margin-top:10px;">
+      <p style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.5;">
+        L<sub>X</sub> = k · L₀ · t<sup>idx</sup> &nbsp;(t in Gyr, L₀ in erg s⁻¹)<br>
+        Defaults: Lammer et al. 2009 (M dwarfs)
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <div class="field"><label>k<sub>sat</sub></label><input type="text" id="x-k_sat" value="0.17" /></div>
+        <div class="field"><label>k<sub>unsat</sub></label><input type="text" id="x-k_unsat" value="0.13" /></div>
+        <div class="field"><label>log₁₀(L₀)</label><input type="text" id="x-log10_L0" value="28.75" /></div>
+        <div class="field"><label>t<sub>sat</sub> <span class="unit">Gyr</span></label><input type="text" id="x-t_sat" value="0.6" /></div>
+        <div class="field"><label>idx<sub>sat</sub></label><input type="text" id="x-idx_sat" value="-0.77" /></div>
+        <div class="field"><label>idx<sub>unsat</sub></label><input type="text" id="x-idx_unsat" value="-1.34" /></div>
+      </div>
+      <span class="hint" style="display:block;margin-top:2px;">Each field accepts a comma-separated array</span>
+    </div>
+  </div>
+
+  <hr class="div" />
+
+  <div>
+    <p class="sec-label">EUV Extrapolation</p>
+    <div class="choice-grid two-col" id="xuv-mode-tabs" style="margin-bottom:12px;">
+      <button class="choice-btn active" type="button" data-xuv-mode="kw20">King &amp; Wheatley 2020</button>
+      <button class="choice-btn" type="button" data-xuv-mode="custom">Custom L<sub>EUV</sub>/L<sub>X</sub></button>
+    </div>
+    <div class="note-box" id="xuv-default-panel" style="margin-bottom:12px;">
+      <div style="margin-bottom:8px;">
+        Use the King &amp; Wheatley 2020 scaling based on solar data, with separate relations for soft and hard X-ray emission:
+      </div>
+      <div style="font-family:inherit;color:var(--text);margin-bottom:10px;">
+        L<sub>EUV</sub>/L<sub>bol</sub> = β (L<sub>bol</sub>/A<sub>s</sub>)<sup>γ</sup> (L<sub>X</sub>/L<sub>bol</sub>)<sup>γ+1</sup>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <div class="field"><label>β<sub>1</sub></label><input type="text" id="xuv-beta1" value="116" inputmode="decimal" spellcheck="false" /></div>
+        <div class="field"><label>γ<sub>1</sub></label><input type="text" id="xuv-gamma1" value="-0.35" inputmode="decimal" spellcheck="false" /></div>
+        <div class="field"><label>β<sub>2</sub></label><input type="text" id="xuv-beta2" value="3040" inputmode="decimal" spellcheck="false" /></div>
+        <div class="field"><label>γ<sub>2</sub></label><input type="text" id="xuv-gamma2" value="-0.76" inputmode="decimal" spellcheck="false" /></div>
+      </div>
+    </div>
+    <div id="xuv-custom-panel" class="mode-panel" hidden>
+      <div class="note-box" style="margin-bottom:12px;">
+        Use a custom single power-law EUV extrapolation:
+        <div style="font-family:inherit;color:var(--text);margin-top:8px;">
+          L<sub>EUV</sub>/L<sub>bol</sub> = β (L<sub>bol</sub>/A<sub>s</sub>)<sup>γ</sup> (L<sub>X</sub>/L<sub>bol</sub>)<sup>γ+1</sup>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <div class="field"><label>β</label><input type="text" id="xuv-beta" value="1.0" inputmode="decimal" spellcheck="false" /></div>
+        <div class="field"><label>γ</label><input type="text" id="xuv-gamma" value="0.0" inputmode="decimal" spellcheck="false" /></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="div" />
+
+  <div>
+    <p class="sec-label">Integration window</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="field"><label>Start time <span class="unit">yr</span></label><input type="text" id="t1" value="1e6" /></div>
+      <div class="field"><label>Duration <span class="unit">yr</span></label><input type="text" id="dt" value="5e9" /></div>
+    </div>
+  </div>
+
+  <hr class="div" />
+
+  <div>
+    <p class="sec-label">Main Figure X-axis</p>
+    <div class="choice-grid two-col" id="main-xaxis-tabs">
+      <button class="choice-btn active" type="button" data-main-x="vesc">Escape velocity</button>
+      <button class="choice-btn" type="button" data-main-x="pl_masse">Planet mass</button>
+      <button class="choice-btn" type="button" data-main-x="st_mass">Stellar mass</button>
+      <button class="choice-btn" type="button" data-main-x="teq">Equilibrium temperature</button>
+    </div>
+  </div>
+
+  <button class="run-btn" id="run-btn">Calculate</button>
+  <p class="status-msg" id="status-msg"></p>
+</aside>
+
+<main class="main">
+  <div class="summary-wrap" id="summary-wrap">
+    <table class="summary-table" id="summary-table"></table>
+  </div>
+  <div class="chart-wrap">
+    <div class="main-charts">
+      <div class="chart-panel">
+        <div class="chart-canvas-wrap"><canvas id="chart"></canvas></div>
+      </div>
+      <div class="chart-panel">
+        <div class="chart-canvas-wrap"><canvas id="integrated-xuv-chart"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-panels">
+    <div class="bottom-panel">
+      <p class="bottom-panel-title">Escape rate vs XUV flux</p>
+      <div class="bottom-panel-canvas-wrap"><canvas id="escape-chart"></canvas></div>
+    </div>
+    <div class="bottom-panel">
+      <p class="bottom-panel-title">X-ray luminosity vs time</p>
+      <div class="bottom-panel-canvas-wrap"><canvas id="xray-chart"></canvas></div>
+    </div>
+  </div>
+</main>
+</div>
+
+<script src="./web_data.js"></script>
+<script>
+  const ATM_META = {
+    CO2: { label: 'CO₂', color: '#3a6fd8' },
+    CH4: { label: 'CH₄', color: '#d97706' },
+    H2O: { label: 'H₂O', color: '#0891b2' },
+    N2O2_N22: { label: 'N₂/O₂ (N22)', color: '#7c3aed' },
+    N2O2_CP24: { label: 'N₂/O₂ (CP24)', color: '#16a34a' },
+    CUSTOM: { label: 'Custom', color: '#111827' },
+  };
+  const MODEL_LABELS = {
+    Jackson: 'J+G',
+    Selsis: 'S',
+    custom: 'Custom',
+  };
+  const MODEL_DASHES = {
+    Jackson: [],
+    Selsis: [7, 3],
+    custom: [2, 2],
+  };
+  const MODEL_MARKERS = {
+    Jackson: 'circle',
+    Selsis: 'triangle',
+    custom: 'rectRot',
+  };
+  const PLANET_COLORS = ['#3a6fd8', '#d97706', '#0891b2', '#16a34a', '#dc2626', '#7c3aed'];
+  const PLANET_ESCAPE_DASHES = [[], [6, 3], [2, 2], [8, 3, 2, 3], [4, 2, 4, 2]];
+  const XRAY_PANEL_COLOR = '#374151';
+  const XUV_PANEL_COLOR = '#111827';
+  const SHARED_VESC_TICKS = [5, 10, 15, 20, 25];
+  const MAIN_Y_AXIS_WIDTH = 78;
+  const MAIN_LEGEND_WIDTH = 180;
+  const XRAY_PLANET_DASHES = [
+    [],
+    [12, 4, 3, 4],
+    [8, 3, 2, 3, 2, 3],
+    [16, 5, 4, 5, 4, 5],
+    [3, 3, 10, 3],
+  ];
+  const COSMIC_DATASET = window.COSMIC_DATA || { xray: null, planets: [], rockySamples: [] };
+  window.COSMIC_PLOT_META = { MODEL_MARKERS };
+  const ATM_DATA = COSMIC_DATASET.atmosphere || null;
+
+  function uniquePlanetsByName(planets) {
+    const seen = new Set();
+    return (planets || []).filter((planet) => {
+      const key = String(planet?.pl_name || '').trim().toLowerCase();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  const UNIQUE_PLANETS = uniquePlanetsByName(COSMIC_DATASET.planets || []);
+  const UNIQUE_ROCKY_SAMPLES = uniquePlanetsByName(COSMIC_DATASET.rockySamples || []);
+  const PLANET_LOOKUP = new Map(UNIQUE_PLANETS.map((planet) => [planet.pl_name.toLowerCase(), planet]));
+
+  function parseCsvNumbers(value) {
+    return String(value || '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .map(Number)
+      .filter((item) => Number.isFinite(item));
+  }
+
+  function parseNameList(value) {
+    return String(value || '')
+      .replace(/\n/g, ',')
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  function sampleUpTo(items, limit = 5) {
+    if (items.length <= limit) return items;
+    const pool = items.slice();
+    for (let i = pool.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    return pool.slice(0, limit);
+  }
+
+  function nearestIndex(values, target) {
+    let bestIndex = 0;
+    let bestDistance = Infinity;
+    values.forEach((value, index) => {
+      const distance = Math.abs(value - target);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestIndex = index;
+      }
+    });
+    return bestIndex;
+  }
+
+  function clamp(value, low, high) {
+    return Math.max(low, Math.min(high, value));
+  }
+
+  function findBracket(values, target) {
+    if (target <= values[0]) return [0, 0, 0];
+    if (target >= values[values.length - 1]) return [values.length - 1, values.length - 1, 0];
+    for (let i = 0; i < values.length - 1; i += 1) {
+      if (target >= values[i] && target <= values[i + 1]) {
+        const span = values[i + 1] - values[i];
+        const weight = span === 0 ? 0 : (target - values[i]) / span;
+        return [i, i + 1, weight];
+      }
+    }
+    return [values.length - 1, values.length - 1, 0];
+  }
+
+  function interp1d(xs, ys, x) {
+    const xClamped = clamp(x, xs[0], xs[xs.length - 1]);
+    const [i0, i1, weight] = findBracket(xs, xClamped);
+    if (i0 === i1) return ys[i0];
+    return ys[i0] * (1 - weight) + ys[i1] * weight;
+  }
+
+  function interp1dLogY(xs, ys, x) {
+    const logYs = ys.map((value) => Math.log10(value));
+    return 10 ** interp1d(xs, logYs, x);
+  }
+
+  function interp2dRectLogY(xGrid, yGrid, gridRows, x, y) {
+    const [x0, x1, xw] = findBracket(xGrid, clamp(x, xGrid[0], xGrid[xGrid.length - 1]));
+    const [y0, y1, yw] = findBracket(yGrid, clamp(y, yGrid[0], yGrid[yGrid.length - 1]));
+    const q00 = Math.log10(gridRows[y0][x0]);
+    const q10 = Math.log10(gridRows[y0][x1]);
+    const q01 = Math.log10(gridRows[y1][x0]);
+    const q11 = Math.log10(gridRows[y1][x1]);
+    const xLow = q00 * (1 - xw) + q10 * xw;
+    const xHigh = q01 * (1 - xw) + q11 * xw;
+    return 10 ** (xLow * (1 - yw) + xHigh * yw);
+  }
+
+  function get2D(flat, shape, row, col) {
+    return flat[row * shape[1] + col];
+  }
+
+  function transpose2D(flat, shape) {
+    const [rows, cols] = shape;
+    const out = new Float64Array(rows * cols);
+    for (let r = 0; r < rows; r += 1) {
+      for (let c = 0; c < cols; c += 1) {
+        out[c * rows + r] = flat[r * cols + c];
+      }
+    }
+    return { data: out, shape: [cols, rows] };
+  }
+
+  function bilinearGrid(xGrid, yGrid, grid, x, y) {
+    const [x0, x1, xw] = findBracket(xGrid, clamp(x, xGrid[0], xGrid[xGrid.length - 1]));
+    const [y0, y1, yw] = findBracket(yGrid, clamp(y, yGrid[0], yGrid[yGrid.length - 1]));
+    const q00 = grid[x0][y0];
+    const q10 = grid[x1][y0];
+    const q01 = grid[x0][y1];
+    const q11 = grid[x1][y1];
+    const xLow = q00 * (1 - xw) + q10 * xw;
+    const xHigh = q01 * (1 - xw) + q11 * xw;
+    return xLow * (1 - yw) + xHigh * yw;
+  }
+
+  function calculateLxToBol(modelData, stellarMass, timeYears, method) {
+    const logTime = Math.log10(timeYears);
+    if (method === 'Selsis') {
+      const idx = nearestIndex(modelData.selsisMasses, stellarMass);
+      const values = modelData.selsisFx.map((row) => row[idx]);
+      return interp1dLogY(modelData.selsisAges.map((value) => Math.log10(value)), values, logTime);
+    }
+    if (stellarMass >= 0.5) {
+      const idx = nearestIndex(modelData.jacksonMasses, stellarMass);
+      const values = modelData.jacksonLxBol[idx];
+      return interp1dLogY(modelData.jacksonAges.map((value) => Math.log10(value)), values, logTime);
+    }
+    const idx = nearestIndex(modelData.guinanMasses, stellarMass);
+    const values = modelData.guinanLxBol[idx];
+    return interp1dLogY(modelData.guinanAges.map((value) => Math.log10(value)), values, logTime);
+  }
+
+  function calculateLbol(modelData, stellarMass, timeYears) {
+    const logLsun = bilinearGrid(
+      modelData.b15Masses,
+      modelData.b15LogAges,
+      modelData.lBol,
+      stellarMass,
+      Math.log10(timeYears),
+    );
+    return 3.846e26 * (10 ** logLsun);
+  }
+
+  function calculateLbolToSun(modelData, stellarMass, timeYears) {
+    return calculateLbol(modelData, stellarMass, timeYears) / 3.846e26;
+  }
+
+  function calculateRstar(modelData, stellarMass, timeYears) {
+    return bilinearGrid(
+      modelData.b15Masses,
+      modelData.b15LogAges,
+      modelData.rStar,
+      stellarMass,
+      Math.log10(timeYears),
+    );
+  }
+
+  function calculateCustomLx(timeYears, params) {
+    const timeGyr = timeYears / 1e9;
+    const l0 = 10 ** params.log10_L0;
+    if (timeGyr < params.t_sat) {
+      return params.k_sat * l0 * (timeGyr ** params.idx_sat);
+    }
+    return params.k_unsat * l0 * (timeGyr ** params.idx_unsat);
+  }
+
+  function buildCustomParams() {
+    return {
+      k_sat: Number(document.getElementById('x-k_sat').value),
+      k_unsat: Number(document.getElementById('x-k_unsat').value),
+      log10_L0: Number(document.getElementById('x-log10_L0').value),
+      t_sat: Number(document.getElementById('x-t_sat').value),
+      idx_sat: Number(document.getElementById('x-idx_sat').value),
+      idx_unsat: Number(document.getElementById('x-idx_unsat').value),
+    };
+  }
+
+  function getXrayPanelDashPattern(planetIndex, xrayModel) {
+    const planetDash = XRAY_PLANET_DASHES[planetIndex % XRAY_PLANET_DASHES.length];
+    const modelDash = MODEL_DASHES[xrayModel] || [];
+    if (!planetDash.length) return modelDash;
+    if (!modelDash.length) return planetDash;
+    return [...planetDash, ...modelDash];
+  }
+
+  function getSelectedMainXAxis() {
+    const active = document.querySelector('#main-xaxis-tabs .choice-btn.active');
+    return active ? active.dataset.mainX : 'vesc';
+  }
+
+  function getMainAxisMeta(xAxisKey) {
+    if (xAxisKey === 'pl_masse') {
+      return {
+        label: 'Planet mass (M⊕)',
+        type: 'logarithmic',
+        tickValues: [0.3, 0.5, 1, 2, 5, 10],
+        min: 0.3,
+        max: 10,
+        format: (value) => Number(value).toString(),
+      };
+    }
+    if (xAxisKey === 'st_mass') {
+      return {
+        label: 'Stellar mass (M☉)',
+        type: 'logarithmic',
+        tickValues: [0.1, 0.2, 0.5, 1, 2],
+        min: 0.1,
+        max: 2,
+        format: (value) => Number(value).toString(),
+      };
+    }
+    if (xAxisKey === 'teq') {
+      return {
+        label: 'Equilibrium temperature (K)',
+        type: 'logarithmic',
+        tickValues: [200, 300, 500, 1000, 2000],
+        min: 200,
+        max: 2000,
+        format: (value) => Number(value).toString(),
+      };
+    }
+    return {
+      label: 'Escape velocity (km/s)',
+      type: 'logarithmic',
+      tickValues: SHARED_VESC_TICKS,
+      min: 5,
+      max: 25,
+      format: (value) => Number(value).toFixed(0),
+    };
+  }
+
+  function sharedMainXAxis(showTitle, showTickLabels) {
+    const axisMeta = getMainAxisMeta(getSelectedMainXAxis());
+    return {
+      type: axisMeta.type,
+      min: axisMeta.min,
+      max: axisMeta.max,
+      afterBuildTicks(axis) {
+        axis.ticks = axisMeta.tickValues.map((value) => ({ value }));
+      },
+      title: {
+        display: showTitle,
+        text: axisMeta.label,
+        color: '#374151',
+        font: { size: 14, weight: '700' },
+      },
+      ticks: {
+        display: showTickLabels,
+        color: '#374151',
+        callback: (value) => axisMeta.format(value),
+        font: { size: 11, weight: '600' },
+      },
+      grid: { color: '#e0e2ea' },
+    };
+  }
+
+  function sharedLeftYAxis(titleText, maxTicksLimit) {
+    return {
+      position: 'left',
+      type: 'logarithmic',
+      afterFit(axis) {
+        axis.width = MAIN_Y_AXIS_WIDTH;
+      },
+      title: {
+        display: true,
+        text: titleText,
+        color: '#374151',
+        font: { size: 14, weight: '700' },
+      },
+      ticks: {
+        color: '#374151',
+        maxTicksLimit,
+        callback: (value) => Number(value).toExponential(0),
+        font: { size: 11, weight: '600' },
+      },
+      grid: { color: '#e0e2ea' },
+    };
+  }
+
+  function formatMainXAxisValue(value) {
+    const xAxisKey = getSelectedMainXAxis();
+    if (xAxisKey === 'teq') return `${Number(value).toFixed(0)} K`;
+    if (xAxisKey === 'st_mass') return `${Number(value).toFixed(2)} M☉`;
+    if (xAxisKey === 'pl_masse') return `${Number(value).toFixed(2)} M⊕`;
+    return `${Number(value).toFixed(2)} km/s`;
+  }
+
+  function getSelectedEuvMode() {
+    const active = document.querySelector('#xuv-mode-tabs .choice-btn.active');
+    return active ? active.dataset.xuvMode : 'kw20';
+  }
+
+  function getEuvParams() {
+    if (getSelectedEuvMode() === 'custom') {
+      return {
+        beta: Number(document.getElementById('xuv-beta').value),
+        gamma: Number(document.getElementById('xuv-gamma').value),
+      };
+    }
+    return {
+      beta1: Number(document.getElementById('xuv-beta1').value),
+      beta2: Number(document.getElementById('xuv-beta2').value),
+      gamma1: Number(document.getElementById('xuv-gamma1').value),
+      gamma2: Number(document.getElementById('xuv-gamma2').value),
+    };
+  }
+
+  function buildLogTimeGrid(startTime = 1e6, stopTime = 1e9, count = 240) {
+    const logStart = Math.log10(startTime);
+    const logStop = Math.log10(stopTime);
+    const step = (logStop - logStart) / (count - 1);
+    return Array.from({ length: count }, (_, index) => 10 ** (logStart + index * step));
+  }
+
+  function buildCosmicShorelineLine(vEscMin = 4, vEscMax = 30, count = 120) {
+    const safeMin = Math.max(vEscMin, 1e-3);
+    const safeMax = Math.max(vEscMax, safeMin * 1.01);
+    const logStart = Math.log10(safeMin);
+    const logStop = Math.log10(safeMax);
+    const step = (logStop - logStart) / (count - 1);
+    return Array.from({ length: count }, (_, index) => {
+      const v_esc = 10 ** (logStart + index * step);
+      const y = 6.9e-4 * (v_esc ** 4);
+      return { x: v_esc, y };
+    });
+  }
+
+  function getSelectedInputMode() {
+    const active = document.querySelector('#input-mode-tabs .mode-tab.active');
+    return active ? active.dataset.mode : 'manual';
+  }
+
+  function getSelectedXrayModels() {
+    const selected = Array.from(document.querySelectorAll('#xray-tabs .choice-btn.active')).map((button) => button.dataset.xray);
+    return selected.length ? selected : ['Jackson'];
+  }
+
+  function getSelectedAtmospheres() {
+    return Array.from(document.querySelectorAll('.atm-btn.active')).map((button) => button.dataset.atm);
+  }
+
+  function inferRadiusEarth(massEarth) {
+    return interp1d(ATM_DATA.mrEarthMass, ATM_DATA.mrEarthRadius, massEarth);
+  }
+
+  function calculateEscapeVelocity(pl_masse, pl_radiuse) {
+    return Math.sqrt(2 * 6.67430e-11 * 5.972e24 * pl_masse / (pl_radiuse * 6.371e6)) / 1e3;
+  }
+
+  function calculateEquilibriumTemperature(modelData, planet, timeYears) {
+    if (!Number.isFinite(planet.st_mass) || !Number.isFinite(planet.pl_orbsmax) || planet.pl_orbsmax <= 0) return null;
+    const lBolToSun = calculateLbolToSun(modelData, planet.st_mass, timeYears);
+    return 278.5 * (lBolToSun ** 0.25) / Math.sqrt(planet.pl_orbsmax);
+  }
+
+  function getMainXAxisValue(modelData, planet, timeYears) {
+    const xAxisKey = getSelectedMainXAxis();
+    if (xAxisKey === 'pl_masse') return planet.pl_masse;
+    if (xAxisKey === 'st_mass') return planet.st_mass;
+    if (xAxisKey === 'teq') return calculateEquilibriumTemperature(modelData, planet, timeYears);
+    return planet.pl_vesc;
+  }
+
+  function isApproxEarthMass(pl_masse, tolerance = 0.05) {
+    return Number.isFinite(pl_masse) && Math.abs(pl_masse - 1) <= tolerance;
+  }
+
+  function buildPlanetSeries(options = {}) {
+    const { sample = true } = options;
+    const mode = getSelectedInputMode();
+    const namePreview = document.getElementById('name-preview');
+
+    if (mode === 'manual') {
+      const stellarMasses = parseCsvNumbers(document.getElementById('m-st_mass').value);
+      const orbits = parseCsvNumbers(document.getElementById('m-pl_orbsmax').value);
+      const masses = parseCsvNumbers(document.getElementById('m-pl_masse').value);
+      const radii = parseCsvNumbers(document.getElementById('m-pl_radiuse').value);
+      const planets = masses.map((pl_masse, index) => {
+        const pl_radiuse = radii.length ? radii[index] ?? radii[radii.length - 1] : inferRadiusEarth(pl_masse);
+        const st_mass = stellarMasses.length ? stellarMasses[index] ?? stellarMasses[stellarMasses.length - 1] : NaN;
+        const pl_orbsmax = orbits.length ? orbits[index] ?? orbits[orbits.length - 1] : NaN;
+        return { label: `P${index + 1}`, pl_masse, pl_radiuse, st_mass, pl_orbsmax, pl_vesc: calculateEscapeVelocity(pl_masse, pl_radiuse) };
+      }).filter((item) => Number.isFinite(item.pl_masse) && Number.isFinite(item.pl_radiuse));
+      return sample ? sampleUpTo(planets) : planets;
+    }
+
+    if (mode === 'names') {
+      const names = parseNameList(document.getElementById('n-names').value);
+      const found = [];
+      const missing = [];
+      names.forEach((name) => {
+        const item = PLANET_LOOKUP.get(name.toLowerCase());
+        if (!item || !Number.isFinite(item.st_mass)) {
+          missing.push(name);
+          return;
+        }
+        const pl_masse = item.pl_masse;
+        const pl_radiuse = Number.isFinite(item.pl_rade) ? item.pl_rade : (Number.isFinite(pl_masse) ? inferRadiusEarth(pl_masse) : NaN);
+        if (!Number.isFinite(pl_masse) || !Number.isFinite(pl_radiuse)) {
+          missing.push(name);
+          return;
+        }
+        found.push({
+          label: item.pl_name,
+          pl_masse,
+          pl_radiuse,
+          st_mass: item.st_mass,
+          pl_orbsmax: item.pl_orbsmax,
+          pl_vesc: calculateEscapeVelocity(pl_masse, pl_radiuse),
+        });
+      });
+      namePreview.textContent = missing.length ? `Not found or missing mass/radius/st_mass: ${missing.join(', ')}` : '';
+      return sample ? sampleUpTo(found) : found;
+    }
+
+    namePreview.textContent = '';
+    const rockyPlanets = UNIQUE_ROCKY_SAMPLES
+      .filter((item) => Number.isFinite(item.pl_masse) && (Number.isFinite(item.pl_rade) || Number.isFinite(item.pl_masse)))
+      .map((item) => ({
+        label: item.pl_name,
+        pl_masse: item.pl_masse,
+        pl_radiuse: Number.isFinite(item.pl_rade) ? item.pl_rade : inferRadiusEarth(item.pl_masse),
+        st_mass: item.st_mass,
+        pl_orbsmax: item.pl_orbsmax,
+        pl_vesc: Number.isFinite(item.pl_vesc) ? item.pl_vesc : calculateEscapeVelocity(item.pl_masse, Number.isFinite(item.pl_rade) ? item.pl_rade : inferRadiusEarth(item.pl_masse)),
+      }));
+    return sample ? sampleUpTo(rockyPlanets) : rockyPlanets;
+  }
+
+  function calculateTotalXuvLuminosity(modelData, stellarMass, timeYears, xrayModel, customXrayParams, euvMode, euvParams) {
+    const lBol = calculateLbol(modelData, stellarMass, timeYears);
+    const rStar = calculateRstar(modelData, stellarMass, timeYears);
+    let lXErg;
+    let lXToBol;
+    if (xrayModel === 'custom') {
+      lXErg = calculateCustomLx(timeYears, customXrayParams);
+      lXToBol = (lXErg / 1e7) / lBol;
+    } else {
+      lXToBol = calculateLxToBol(modelData, stellarMass, timeYears, xrayModel);
+      lXErg = lXToBol * lBol * 1e7;
+    }
+    const As = 4 * Math.PI * (rStar * 6.96e8) ** 2 * 1e4;
+    if (euvMode === 'custom') {
+      const lEuvToBol = euvParams.beta * ((lBol * 1e7 / As) ** euvParams.gamma) * (lXToBol ** (euvParams.gamma + 1));
+      return (lXToBol + lEuvToBol) * lBol;
+    }
+    const lEuv1ToBol = euvParams.beta1 * ((lBol * 1e7 / As) ** euvParams.gamma1) * (lXToBol ** (euvParams.gamma1 + 1));
+    const lEuv2ToBol = euvParams.beta2 * ((lBol * 1e7 / As) ** euvParams.gamma2) * (lXToBol ** (euvParams.gamma2 + 1));
+    return (lXToBol + lEuv1ToBol + lEuv2ToBol) * lBol;
+  }
+
+  function integrateTrapezoid(xs, ys) {
+    let total = 0;
+    for (let i = 1; i < xs.length; i += 1) {
+      total += 0.5 * (ys[i] + ys[i - 1]) * (xs[i] - xs[i - 1]);
+    }
+    return total;
+  }
+
+  function zcScaledXuv(modelData, planet, timeYears) {
+    const lBolToSun = calculateLbolToSun(modelData, planet.st_mass, timeYears);
+    return (1 / (planet.pl_orbsmax ** 2)) * (lBolToSun ** 0.4);
+  }
+
+  function fluxRelativeEarthFromXuv(lXuv, pl_orbsmax) {
+    return lXuv / (4 * Math.PI * (pl_orbsmax * 1.496e11) ** 2) / 0.00464;
+  }
+
+  function cumulativeLossFraction(modelData, planet, atmKey, xrayModel, timeGrid, customXrayParams, euvMode, euvParams) {
+    if (!Number.isFinite(planet.pl_masse) || !Number.isFinite(planet.pl_orbsmax) || !Number.isFinite(planet.st_mass)) {
+      return null;
+    }
+    const rateSeries = timeGrid.map((timeYears) => {
+      const lXuv = calculateTotalXuvLuminosity(modelData, planet.st_mass, timeYears, xrayModel, customXrayParams, euvMode, euvParams);
+      const fluxRelEarth = fluxRelativeEarthFromXuv(lXuv, planet.pl_orbsmax);
+      const rate = computeEscapeRate(atmKey, planet, fluxRelEarth);
+      return Number.isFinite(rate) && rate > 0 ? rate : NaN;
+    });
+    if (rateSeries.some((value) => !Number.isFinite(value))) {
+      return null;
+    }
+    const totalLossKg = integrateTrapezoid(timeGrid, rateSeries) * 365.25 * 24 * 3600;
+    return totalLossKg / (planet.pl_masse * 5.972e24);
+  }
+
+  function co2RateKgS(pl_masse, pl_radiuse, fluxRelEarth) {
+    const flux = Math.max(1e-10, fluxRelEarth);
+    const radius = Number.isFinite(pl_radiuse) ? pl_radiuse : inferRadiusEarth(pl_masse);
+    const fEarth = 0.00464;
+    const molDotEnergy = 6e23 / 0.012 / 1e4 / 4 * (0.1 * flux * fEarth * (radius * 6.37e6)) / (6.67e-11 * pl_masse * 5.97e24);
+    const molDot = interp2dRectLogY(
+      ATM_DATA.co2LinearMasses,
+      ATM_DATA.co2LinearFluxes.map((value) => Math.log10(value)),
+      ATM_DATA.co2LinearEscape,
+      pl_masse,
+      Math.log10(flux),
+    );
+    const limitedMolDot = Math.min(molDot, molDotEnergy);
+    return limitedMolDot / 6e23 * 0.012 * (1e4 * 4 * Math.PI * (radius * 6.37e6) ** 2);
+  }
+
+  function ch4RateKgS(pl_masse, pl_radiuse, fluxRelEarth) {
+    const radius = Number.isFinite(pl_radiuse) ? pl_radiuse : inferRadiusEarth(pl_masse);
+    const fEarth = 0.00464;
+    return 12 / 16 * (0.1 * Math.PI * Math.max(1e-10, fluxRelEarth) * fEarth * radius ** 3 * (6.37e6 ** 3)) / (6.67e-11 * pl_masse * 5.97e24);
+  }
+
+  function h2oRateKgS(pl_masse, fluxRelEarth) {
+    if (!isApproxEarthMass(pl_masse)) return null;
+    const fluxCgs = Math.max(1e-10, fluxRelEarth) * 0.00464 * 1e3;
+    const logRate = interp1d(ATM_DATA.h2oFxuv.map((value) => Math.log10(value)), ATM_DATA.h2oMassRateLog10, Math.log10(fluxCgs));
+    const massRateGSCm2 = 10 ** logRate;
+    return (4 * Math.PI * (6.37e6 + 1e8) ** 2 * 1e4) / 1e3 * massRateGSCm2;
+  }
+
+  function n22RateKgS(pl_masse, fluxRelEarth) {
+    if (!isApproxEarthMass(pl_masse)) return null;
+    const logMassRate = interp1d(
+      ATM_DATA.n22FluxToEarth.map((value) => Math.log10(value)),
+      ATM_DATA.n22MassRateKgSm2.map((value) => Math.log10(value)),
+      Math.log10(Math.max(1e-10, fluxRelEarth)),
+    );
+    return 28 / 29 * (10 ** logMassRate) * (4 * Math.PI * (6.637e6 ** 2));
+  }
+
+  function cp24RateKgS(pl_masse, pl_radiuse, fluxRelEarth) {
+    const radius = Number.isFinite(pl_radiuse) ? pl_radiuse : inferRadiusEarth(pl_masse);
+    const masses = ATM_DATA.cp24Masses;
+    const logFlux = Math.log10(Math.max(1e-10, fluxRelEarth));
+    const logLowCut = interp1d(masses, ATM_DATA.cp24LowCutLow, Math.min(pl_masse, 5.9));
+    const logHighCut = interp1d(masses, ATM_DATA.cp24HighCutLow, Math.min(pl_masse, 5.9));
+    const lowCut = 10 ** logLowCut;
+    const highCut = 10 ** logHighCut;
+    if (fluxRelEarth < lowCut) return 1e-17 * (4 * Math.PI * (radius * 6.637e6) ** 2);
+    const cappedFlux = Math.min(Math.max(1e-10, fluxRelEarth), highCut);
+    const [m0, m1, mw] = findBracket(masses, clamp(pl_masse, masses[0], masses[masses.length - 1]));
+    const logFluxGrid = ATM_DATA.cp24FluxGrid.map((value) => Math.log10(value));
+    const v0 = interp1d(logFluxGrid, ATM_DATA.cp24ElGrid[m0].map((value) => Math.log10(value)), Math.log10(cappedFlux));
+    const v1 = interp1d(logFluxGrid, ATM_DATA.cp24ElGrid[m1].map((value) => Math.log10(value)), Math.log10(cappedFlux));
+    const lossRate = 10 ** (v0 * (1 - mw) + v1 * mw);
+    return lossRate * (4 * Math.PI * (radius * 6.637e6) ** 2);
+  }
+
+  function customRateKgS(planet, fluxRelEarth) {
+    const expr = document.getElementById('atm-custom-expression').value.trim();
+    if (!expr) return null;
+    try {
+      const fn = new Function('F_xuv', 'pl_masse', 'pl_radiuse', `return (${expr});`);
+      const value = fn(fluxRelEarth, planet.pl_masse, planet.pl_radiuse);
+      return Number.isFinite(value) ? value : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function computeEscapeRate(atmKey, planet, fluxRelEarth) {
+    if (atmKey === 'CO2') return co2RateKgS(planet.pl_masse, planet.pl_radiuse, fluxRelEarth);
+    if (atmKey === 'CH4') return ch4RateKgS(planet.pl_masse, planet.pl_radiuse, fluxRelEarth);
+    if (atmKey === 'H2O') return h2oRateKgS(planet.pl_masse, fluxRelEarth);
+    if (atmKey === 'N2O2_N22') return n22RateKgS(planet.pl_masse, fluxRelEarth);
+    if (atmKey === 'N2O2_CP24') return cp24RateKgS(planet.pl_masse, planet.pl_radiuse, fluxRelEarth);
+    if (atmKey === 'CUSTOM') return customRateKgS(planet, fluxRelEarth);
+    return null;
+  }
+
+  const escapeChart = new Chart(document.getElementById('escape-chart').getContext('2d'), {
+    type: 'line',
+    data: { datasets: [] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 150 },
+      scales: {
+        x: {
+          type: 'logarithmic',
+          title: { display: true, text: 'XUV flux relative to Earth', color: '#6b7280', font: { size: 10 } },
+          ticks: { color: '#6b7280', maxTicksLimit: 5, font: { size: 10 }, callback: (value) => Number(value).toExponential(0) },
+          grid: { color: '#e0e2ea' },
+        },
+        y: {
+          type: 'logarithmic',
+          title: { display: true, text: 'Escape rate (kg/s)', color: '#6b7280', font: { size: 10 } },
+          ticks: { color: '#6b7280', maxTicksLimit: 4, font: { size: 10 }, callback: (value) => Number(value).toExponential(0) },
+          grid: { color: '#e0e2ea' },
+        },
+      },
+      plugins: {
+        legend: { display: true, labels: { boxWidth: 10, color: '#1a1d2e', font: { size: 10 } } },
+        tooltip: {
+          callbacks: {
+            title: (items) => `F_XUV/F_Earth = ${Number(items[0].parsed.x).toExponential(2)}`,
+            label: (item) => `${item.dataset.label}: ${item.parsed.y.toExponential(2)} kg/s`,
+          },
+        },
+      },
+      elements: { point: { radius: 0 } },
+    },
+  });
+
+  function getStellarMassSeries() {
+    const mode = getSelectedInputMode();
+    const namePreview = document.getElementById('name-preview');
+
+    if (mode === 'manual') {
+      return sampleUpTo(parseCsvNumbers(document.getElementById('m-st_mass').value).map((stellarMass, index) => ({
+        label: `P${index + 1}`,
+        st_mass: stellarMass,
+      })));
+    }
+
+    if (mode === 'names') {
+      const names = parseNameList(document.getElementById('n-names').value);
+      const found = [];
+      const missing = [];
+      names.forEach((name) => {
+        const item = PLANET_LOOKUP.get(name.toLowerCase());
+        if (!item || !Number.isFinite(item.st_mass)) {
+          missing.push(name);
+        } else {
+          found.push({ label: item.pl_name, st_mass: item.st_mass });
+        }
+      });
+      namePreview.textContent = missing.length ? `Not found or missing st_mass: ${missing.join(', ')}` : '';
+      return sampleUpTo(found);
+    }
+
+    namePreview.textContent = '';
+    return sampleUpTo(UNIQUE_ROCKY_SAMPLES
+      .filter((item) => Number.isFinite(item.st_mass))
+      .map((item) => ({ label: item.pl_name, st_mass: item.st_mass })));
+  }
+
+  const xrayChart = new Chart(document.getElementById('xray-chart').getContext('2d'), {
+    type: 'line',
+    data: { datasets: [] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 150 },
+      scales: {
+        x: {
+          type: 'logarithmic',
+          title: { display: true, text: 'Time (yr)', color: '#6b7280', font: { size: 10 } },
+          ticks: {
+            color: '#6b7280',
+            maxTicksLimit: 5,
+            font: { size: 10 },
+            callback: (value) => Number(value).toExponential(0),
+          },
+          grid: { color: '#e0e2ea' },
+        },
+        y: {
+          type: 'logarithmic',
+          title: { display: true, text: 'Lx (erg/s)', color: '#6b7280', font: { size: 10 } },
+          ticks: {
+            color: '#6b7280',
+            maxTicksLimit: 4,
+            font: { size: 10 },
+            callback: (value) => Number(value).toExponential(0),
+          },
+          grid: { color: '#e0e2ea' },
+        },
+      },
+      plugins: {
+        legend: {
+          display: true,
+          labels: { boxWidth: 10, color: '#1a1d2e', font: { size: 10 } },
+        },
+        tooltip: {
+          callbacks: {
+            title: (items) => `t = ${Number(items[0].parsed.x).toExponential(2)} yr`,
+            label: (item) => `${item.dataset.label}: ${item.parsed.y.toExponential(2)} erg/s`,
+          },
+        },
+      },
+      elements: { point: { radius: 0 } },
+    },
+  });
+
+  const lossVescChart = new Chart(document.getElementById('chart').getContext('2d'), {
+    type: 'scatter',
+    data: { datasets: [] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 150 },
+      scales: {
+        x: sharedMainXAxis(false, false),
+        y: sharedLeftYAxis('Cumulative loss / planet mass', 6),
+      },
+      plugins: {
+        legend: { display: true, position: 'right', maxWidth: MAIN_LEGEND_WIDTH, labels: { color: '#1a1d2e', boxWidth: 12, padding: 14 } },
+        tooltip: {
+          callbacks: {
+            title: (items) => items[0].raw.label,
+            label: (item) => `${getMainAxisMeta(getSelectedMainXAxis()).label}=${formatMainXAxisValue(item.raw.x)}, loss/mass=${item.raw.y.toExponential(2)}`,
+          },
+        },
+      },
+    },
+  });
+
+  const integratedXuvChart = new Chart(document.getElementById('integrated-xuv-chart').getContext('2d'), {
+    type: 'scatter',
+    data: { datasets: [] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 150 },
+      scales: {
+        x: sharedMainXAxis(true, true),
+        y: {
+          ...sharedLeftYAxis('Cumulative XUV / Earth', 4),
+          min: 0.5,
+          max: 2e4,
+        },
+      },
+      plugins: {
+        legend: { display: true, position: 'right', maxWidth: MAIN_LEGEND_WIDTH, labels: { boxWidth: 10, color: '#1a1d2e', font: { size: 10 } } },
+        tooltip: {
+          callbacks: {
+            title: (items) => items[0].raw.label,
+            label: (item) => `${getMainAxisMeta(getSelectedMainXAxis()).label}=${formatMainXAxisValue(item.raw.x)}, I/Iearth=${item.raw.y.toExponential(2)}`,
+          },
+        },
+      },
+    },
+  });
+
+  let xrayRefreshToken = 0;
+  function refreshXrayChart() {
+    const status = document.getElementById('status-msg');
+    const currentToken = ++xrayRefreshToken;
+    const modelData = COSMIC_DATASET.xray;
+    const starSeries = getStellarMassSeries();
+    if (!modelData || !starSeries.length) {
+      xrayChart.data.datasets = [];
+      xrayChart.update();
+      if (getSelectedInputMode() !== 'names') {
+        document.getElementById('name-preview').textContent = '';
+      }
+      status.textContent = '';
+      return;
+    }
+
+    const timeGrid = buildLogTimeGrid(1e6, 1e9);
+    const selectedModels = getSelectedXrayModels();
+
+    try {
+      status.textContent = 'Updating Lx panel…';
+      if (currentToken !== xrayRefreshToken) return;
+      const customParams = selectedModels.includes('custom') ? buildCustomParams() : null;
+
+      xrayChart.data.datasets = starSeries.flatMap((item, index) =>
+        selectedModels.map((xrayModel) => {
+          const data = timeGrid.map((timeYears) => {
+            let lX;
+            if (xrayModel === 'custom') {
+              lX = calculateCustomLx(timeYears, customParams);
+            } else {
+              const lXToBol = calculateLxToBol(modelData, item.st_mass, timeYears, xrayModel);
+              const lBol = calculateLbol(modelData, item.st_mass, timeYears);
+              lX = lXToBol * lBol * 1e7;
+            }
+            return { x: timeYears, y: Math.max(lX, 1e-30) };
+          });
+          return {
+            label: `${item.label} (${item.st_mass} M☉) | ${MODEL_LABELS[xrayModel]}`,
+            data,
+            borderColor: XRAY_PANEL_COLOR,
+            backgroundColor: XRAY_PANEL_COLOR,
+            borderWidth: 1.8,
+            borderDash: getXrayPanelDashPattern(index, xrayModel),
+            tension: 0.18,
+            pointRadius: 0,
+          };
+        })
+      );
+
+      xrayChart.update();
+      status.textContent = '';
+    } catch (error) {
+      console.error(error);
+      if (currentToken !== xrayRefreshToken) return;
+      status.textContent = `Unable to update Lx panel: ${error.message}`;
+    }
+  }
+
+  function refreshEscapeChart() {
+    const planets = buildPlanetSeries();
+    const atmospheres = getSelectedAtmospheres();
+    if (!ATM_DATA || !planets.length || !atmospheres.length) {
+      escapeChart.data.datasets = [];
+      escapeChart.update();
+      return;
+    }
+    const fluxGrid = buildLogTimeGrid(1, 1e5, 220);
+    escapeChart.data.datasets = planets.flatMap((planet, planetIndex) => {
+      const planetDash = PLANET_ESCAPE_DASHES[planetIndex % PLANET_ESCAPE_DASHES.length];
+      return atmospheres.map((atmKey) => {
+        const meta = ATM_META[atmKey];
+        const data = fluxGrid
+          .map((flux) => {
+            const rate = computeEscapeRate(atmKey, planet, flux);
+            return Number.isFinite(rate) && rate > 0 ? { x: flux, y: rate } : null;
+          })
+          .filter(Boolean);
+        return {
+          label: `${planet.label} | ${meta.label}`,
+          data,
+          borderColor: meta.color,
+          backgroundColor: meta.color,
+          borderWidth: 1.8,
+          borderDash: planetDash,
+          tension: 0.18,
+          pointRadius: 0,
+        };
+      });
+    });
+    escapeChart.update();
+  }
+
+  function refreshIntegratedXuvChart() {
+    const modelData = COSMIC_DATASET.xray;
+    const planets = buildPlanetSeries({ sample: getSelectedInputMode() !== 'rocks' })
+      .filter((planet) => Number.isFinite(planet.st_mass) && Number.isFinite(planet.pl_orbsmax) && Number.isFinite(planet.pl_vesc));
+    const atmospheres = getSelectedAtmospheres();
+    const selectedModels = getSelectedXrayModels();
+    if (!modelData || !planets.length || !selectedModels.length || !atmospheres.length) {
+      lossVescChart.data.datasets = [];
+      lossVescChart.update();
+      integratedXuvChart.data.datasets = [];
+      integratedXuvChart.update();
+      return;
+    }
+    const t1 = Number(document.getElementById('t1').value) || 1e6;
+    const dt = Number(document.getElementById('dt').value) || 5e9;
+    const timeGrid = buildLogTimeGrid(t1, t1 + dt, 180);
+    const xEvalTime = t1 + dt;
+    const customXrayParams = selectedModels.includes('custom') ? buildCustomParams() : null;
+    const euvMode = getSelectedEuvMode();
+    const euvParams = getEuvParams();
+
+    const scatterDatasets = selectedModels.flatMap((xrayModel) =>
+      atmospheres.map((atmKey) => {
+        const meta = ATM_META[atmKey];
+        const points = planets
+          .map((planet) => {
+            const lossFraction = cumulativeLossFraction(modelData, planet, atmKey, xrayModel, timeGrid, customXrayParams, euvMode, euvParams);
+            const xValue = getMainXAxisValue(modelData, planet, xEvalTime);
+            if (!Number.isFinite(xValue) || xValue <= 0) return null;
+            if (!Number.isFinite(lossFraction) || lossFraction <= 0) return null;
+            return {
+              x: xValue,
+              y: lossFraction,
+              label: `${planet.label} | ${meta.label} | ${MODEL_LABELS[xrayModel]}`,
+            };
+          })
+          .filter(Boolean);
+        return {
+          label: `${meta.label} | ${MODEL_LABELS[xrayModel]}`,
+          points,
+          color: meta.color,
+          pointStyle: MODEL_MARKERS[xrayModel],
+        };
+      })
+    );
+
+    lossVescChart.data.datasets = scatterDatasets.map((dataset) => ({
+        label: dataset.label,
+        data: dataset.points.map((point) => ({ x: point.x, y: point.y, label: point.label })),
+        showLine: false,
+        pointRadius: 4,
+        pointHoverRadius: 5,
+        pointStyle: dataset.pointStyle,
+        pointBackgroundColor: dataset.color,
+        pointBorderColor: dataset.color,
+      }));
+    lossVescChart.update();
+
+    const earthOrbitAu = 1;
+    const earthStellarMass = 1;
+    const xuvDatasets = selectedModels.map((xrayModel) => ({
+      label: MODEL_LABELS[xrayModel],
+      data: planets
+        .map((planet) => {
+          const earthIntegrated = integrateTrapezoid(
+            timeGrid,
+            timeGrid.map((timeYears) => {
+              const lXuvEarth = calculateTotalXuvLuminosity(modelData, earthStellarMass, timeYears, xrayModel, customXrayParams, euvMode, euvParams);
+              return fluxRelativeEarthFromXuv(lXuvEarth, earthOrbitAu);
+            }),
+          );
+          const planetIntegrated = integrateTrapezoid(
+            timeGrid,
+            timeGrid.map((timeYears) => {
+              const lXuv = calculateTotalXuvLuminosity(modelData, planet.st_mass, timeYears, xrayModel, customXrayParams, euvMode, euvParams);
+              return fluxRelativeEarthFromXuv(lXuv, planet.pl_orbsmax);
+            }),
+          );
+          const value = planetIntegrated / earthIntegrated;
+          const xValue = getMainXAxisValue(modelData, planet, xEvalTime);
+          if (!Number.isFinite(xValue) || xValue <= 0) return null;
+          return Number.isFinite(value) && value > 0
+            ? { x: xValue, y: value, label: `${planet.label} | ${MODEL_LABELS[xrayModel]}`, planetLabel: planet.label }
+            : null;
+        })
+        .filter(Boolean),
+      showLine: false,
+      pointRadius: 4,
+      pointHoverRadius: 5,
+      pointStyle: MODEL_MARKERS[xrayModel],
+      pointBackgroundColor: XUV_PANEL_COLOR,
+      pointBorderColor: XUV_PANEL_COLOR,
+    }));
+    const zcDataset = {
+      label: 'Z&C 2017 scaling',
+      data: planets.map((planet) => {
+        const xValue = getMainXAxisValue(modelData, planet, xEvalTime);
+        if (!Number.isFinite(xValue) || xValue <= 0) return null;
+        return {
+          x: xValue,
+          y: Math.max(zcScaledXuv(modelData, planet, xEvalTime), 1e-30),
+          label: `${planet.label} (Z&C 2017)`,
+          planetLabel: planet.label,
+        };
+      }).filter(Boolean),
+      showLine: false,
+      pointRadius: 4,
+      pointHoverRadius: 5,
+      pointStyle: 'circle',
+      pointBackgroundColor: 'white',
+      pointBorderWidth: 1.5,
+      pointBorderColor: XUV_PANEL_COLOR,
+    };
+    const integratedDatasets = [
+      ...xuvDatasets,
+      zcDataset,
+    ];
+    if (getSelectedMainXAxis() === 'vesc') {
+      integratedDatasets.push({
+        label: 'Cosmic shoreline',
+        data: buildCosmicShorelineLine(5, 25),
+        type: 'line',
+        showLine: true,
+        pointRadius: 0,
+        borderColor: '#111827',
+        backgroundColor: '#111827',
+        borderWidth: 2,
+        borderDash: [6, 4],
+        tension: 0,
+      });
+    }
+    integratedXuvChart.data.datasets = integratedDatasets;
+    integratedXuvChart.update();
+  }
+
+  let xrayTimer = null;
+  function scheduleXrayRefresh(delay = 120) {
+    clearTimeout(xrayTimer);
+    xrayTimer = setTimeout(refreshXrayChart, delay);
+  }
+
+  let escapeTimer = null;
+  function scheduleEscapeRefresh(delay = 120) {
+    clearTimeout(escapeTimer);
+    escapeTimer = setTimeout(refreshEscapeChart, delay);
+  }
+
+  let integratedTimer = null;
+  function scheduleIntegratedRefresh(delay = 120) {
+    clearTimeout(integratedTimer);
+    integratedTimer = setTimeout(refreshIntegratedXuvChart, delay);
+  }
+
+  const inputModeTabs = document.querySelectorAll('#input-mode-tabs .mode-tab');
+  const inputModePanels = {
+    manual: document.getElementById('panel-manual'),
+    names: document.getElementById('panel-names'),
+    rocks: document.getElementById('panel-rocks'),
+  };
+
+  inputModeTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const mode = tab.dataset.mode;
+      inputModeTabs.forEach((btn) => btn.classList.toggle('active', btn === tab));
+      Object.entries(inputModePanels).forEach(([key, panel]) => {
+        panel.hidden = key !== mode;
+      });
+      scheduleXrayRefresh(0);
+      scheduleEscapeRefresh(0);
+      scheduleIntegratedRefresh(0);
+    });
+  });
+
+  const atmosphereButtons = document.querySelectorAll('.atm-btn');
+  const atmosphereCustomPanel = document.getElementById('atm-custom-panel');
+  atmosphereButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const activeButtons = document.querySelectorAll('.atm-btn.active');
+      const isActive = button.classList.contains('active');
+      if (isActive && activeButtons.length === 1) {
+        return;
+      }
+      button.classList.toggle('active');
+      atmosphereCustomPanel.hidden = !document.querySelector('.atm-btn[data-atm="CUSTOM"]').classList.contains('active');
+      scheduleEscapeRefresh(0);
+      scheduleIntegratedRefresh(0);
+    });
+  });
+
+  const xrayTabs = document.querySelectorAll('#xray-tabs .choice-btn');
+  const xrayCustomPanel = document.getElementById('xray-custom-panel');
+  xrayTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const isActive = tab.classList.contains('active');
+      const activeTabs = document.querySelectorAll('#xray-tabs .choice-btn.active');
+      if (isActive && activeTabs.length === 1) {
+        return;
+      }
+      tab.classList.toggle('active');
+      xrayCustomPanel.style.display = document.querySelector('#xray-tabs .choice-btn[data-xray="custom"]').classList.contains('active') ? '' : 'none';
+      scheduleXrayRefresh(0);
+      scheduleIntegratedRefresh(0);
+    });
+  });
+
+  const xuvModeTabs = document.querySelectorAll('#xuv-mode-tabs .choice-btn');
+  const xuvDefaultPanel = document.getElementById('xuv-default-panel');
+  const xuvCustomPanel = document.getElementById('xuv-custom-panel');
+  xuvModeTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      xuvModeTabs.forEach((btn) => btn.classList.toggle('active', btn === tab));
+      const isCustom = tab.dataset.xuvMode === 'custom';
+      xuvDefaultPanel.hidden = isCustom;
+      xuvCustomPanel.hidden = !isCustom;
+      scheduleIntegratedRefresh(0);
+    });
+  });
+
+  const mainXAxisTabs = document.querySelectorAll('#main-xaxis-tabs .choice-btn');
+  mainXAxisTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      mainXAxisTabs.forEach((btn) => btn.classList.toggle('active', btn === tab));
+      lossVescChart.options.scales.x = sharedMainXAxis(false, false);
+      integratedXuvChart.options.scales.x = sharedMainXAxis(true, true);
+      lossVescChart.update('none');
+      integratedXuvChart.update('none');
+      scheduleIntegratedRefresh(0);
+    });
+  });
+
+  ['m-st_mass', 'm-pl_masse', 'm-pl_radiuse', 'm-pl_orbsmax', 'n-names', 't1', 'dt', 'xuv-beta1', 'xuv-beta2', 'xuv-gamma1', 'xuv-gamma2', 'xuv-beta', 'xuv-gamma'].forEach((id) => {
+    document.getElementById(id).addEventListener('input', () => {
+      scheduleXrayRefresh();
+      scheduleEscapeRefresh();
+      scheduleIntegratedRefresh();
+    });
+  });
+
+  document.getElementById('atm-custom-expression').addEventListener('input', () => {
+    scheduleEscapeRefresh();
+    scheduleIntegratedRefresh();
+  });
+
+  ['x-k_sat', 'x-k_unsat', 'x-log10_L0', 'x-t_sat', 'x-idx_sat', 'x-idx_unsat'].forEach((id) => {
+    document.getElementById(id).addEventListener('input', () => {
+      scheduleXrayRefresh();
+      scheduleIntegratedRefresh();
+    });
+  });
+
+  scheduleXrayRefresh(0);
+  scheduleEscapeRefresh(0);
+  scheduleIntegratedRefresh(0);
+</script>
+</body>
+</html>

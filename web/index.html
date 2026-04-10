@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Cosmic Shoreline Informed by Hydrodynamic Escape</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <h2>The Cosmic Shoreline Informed by Hydrodynamic Escape</h2>
+    </header>
+
+    <main class="layout">
+      <section class="panel source-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="panel-kicker">Input</p>
+            <h2>Planet source and parameters</h2>
+          </div>
+          <span class="status-pill">Earth defaults</span>
+        </div>
+
+        <div class="source-grid input-source-grid">
+          <label class="source-card source-card-active" data-source-card="manual">
+            <input type="radio" name="planet-source" value="manual" checked>
+            <span class="source-title">Input parameters</span>
+            <span class="source-copy">Manual entry with Earth values shown by default. Array input is allowed.</span>
+          </label>
+
+          <label class="source-card" data-source-card="archive">
+            <input type="radio" name="planet-source" value="archive">
+            <span class="source-title">Choose from exoplanet archive</span>
+            <span class="source-copy">Enter a planet name and load archive values later.</span>
+          </label>
+
+          <label class="source-card" data-source-card="rocks">
+            <input type="radio" name="planet-source" value="rocks">
+            <span class="source-title">Use rocky planet sample from Ji+2025</span>
+            <span class="source-copy">Use the predefined rocky sample based on <code>df_rocks</code>.</span>
+          </label>
+        </div>
+
+        <div class="input-main-grid">
+          <div class="input-controls">
+            <div class="source-detail is-active" data-source-detail="manual">
+              <div class="input-toolbar">
+                <p class="help-text">
+                  Defaults are set to Earth. If either planetary mass or radius is omitted, the other is estimated from the Zeng et al. 2019 rocky mass-radius relation.
+                </p>
+                <p class="help-text subtle-text">
+                  Current defaults: label <code>Earth</code>, star mass <code>1.0 Msun</code>, system age <code>4.54e9 yr</code>, planet mass <code>1.0 Mearth</code>, planet radius <code>1.0 Rearth</code>, orbital distance <code>1.0 AU</code>.
+                </p>
+                <p class="help-text subtle-text">
+                  Constants used in <code>cosmic_shoreline.py</code> for the preview: Earth mass <code>5.972e24 kg</code>, Earth radius <code>6.371e6 m</code>, Earth escape velocity <code>11.186 km/s</code>.
+                </p>
+              </div>
+
+              <div class="form-grid">
+                <label>
+                  <span>Planet label</span>
+                  <input id="planet-label" type="text" value="Earth" placeholder="e.g. Earth, TOI-1452 b">
+                </label>
+                <label>
+                  <span>Star mass (Msun)</span>
+                  <input id="stellar-mass" type="text" value="1.0" placeholder="e.g. 1.0">
+                </label>
+                <label>
+                  <span>System age (yr)</span>
+                  <input id="system-age" type="text" value="4.54e9" placeholder="e.g. 4.54e9">
+                </label>
+                <label>
+                  <span>Planet mass (Mearth)</span>
+                  <input id="planet-mass" type="text" value="1.0" placeholder="e.g. 1.0 or 0.5, 1.0, NaN">
+                </label>
+                <label>
+                  <span>Planet radius (Rearth)</span>
+                  <input id="planet-radius" type="text" value="1.0" placeholder="e.g. 1.0 or NaN, 1.0, 1.5">
+                </label>
+                <label>
+                  <span>Orbital distance (AU)</span>
+                  <input id="orbital-distance" type="text" value="1.0" placeholder="e.g. 1.0 or 0.7, 1.0, 1.5">
+                </label>
+              </div>
+
+              <p class="help-text subtle-text">
+                Example array formats: <code>0.5, 1.0, 2.0</code> or <code>[0.5, 1.0, 2.0]</code>. Use <code>NaN</code> for a missing mass or radius that should be inferred.
+              </p>
+
+              <div class="input-action-row">
+                <button id="preview-input-button" class="primary-button" type="button">Show planets on plot</button>
+              </div>
+            </div>
+
+            <div class="source-detail" data-source-detail="archive">
+              <div class="archive-input-row">
+                <label>
+                  <span>Planet name</span>
+                  <input type="text" placeholder="e.g. TRAPPIST-1 e">
+                </label>
+                <button class="ghost-button" type="button">Search archive</button>
+              </div>
+            </div>
+
+            <div class="source-detail" data-source-detail="rocks">
+              <p class="help-text">
+                No extra input fields are shown here. This mode will use the rocky planet sample from Ji+2025 directly.
+              </p>
+            </div>
+          </div>
+
+          <div class="plot-placeholder input-plot-panel">
+            <div class="plot-header">
+              <strong>Escape velocity vs planetary mass</strong>
+              <span id="input-plot-caption">Earth default preview</span>
+            </div>
+            <svg id="vesc-plot" class="plot-svg" viewBox="0 0 720 320" role="img" aria-label="Escape velocity versus planetary mass plot"></svg>
+            <div class="plot-footer">
+              <span id="input-plot-note">Escape velocity is computed from the entered or inferred mass and radius values.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="module-grid">
+        <section class="panel module-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="panel-kicker">Input Module 1</p>
+              <h2>Stellar XUV evolution</h2>
+            </div>
+            <span class="status-pill">Placeholder</span>
+          </div>
+
+          <div class="stack">
+            <label>
+              <span>XUV prescription</span>
+              <select>
+                <option>Choose model</option>
+                <option>Jackson et al. 2012</option>
+                <option>Selsis et al. 2007</option>
+                <option>User-defined track</option>
+              </select>
+            </label>
+
+            <div class="form-grid compact">
+              <label>
+                <span>Start time</span>
+                <input type="text" placeholder="1e6 yr">
+              </label>
+              <label>
+                <span>End time</span>
+                <input type="text" placeholder="1e10 yr">
+              </label>
+              <label>
+                <span>Time resolution</span>
+                <input type="text" placeholder="Number of steps">
+              </label>
+              <label>
+                <span>Normalization</span>
+                <input type="text" placeholder="Optional">
+              </label>
+            </div>
+
+            <div class="plot-placeholder">
+              <div class="plot-header">
+                <strong>XUV evolution preview</strong>
+                <span>time vs XUV flux</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel module-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="panel-kicker">Input Module 2</p>
+              <h2>Escape rate vs evolution</h2>
+            </div>
+            <span class="status-pill">Placeholder</span>
+          </div>
+
+          <div class="stack">
+            <label>
+              <span>Escape model</span>
+              <select>
+                <option>Choose model</option>
+                <option>CO2 hydrodynamic</option>
+                <option>N2/O2 scaling</option>
+                <option>H2O scaling</option>
+                <option>Custom function</option>
+              </select>
+            </label>
+
+            <div class="form-grid compact">
+              <label>
+                <span>Atmosphere type</span>
+                <input type="text" placeholder="CO2, N2/O2, H2O, ...">
+              </label>
+              <label>
+                <span>Mean molecular weight</span>
+                <input type="text" placeholder="MMW">
+              </label>
+              <label>
+                <span>Efficiency / scaling</span>
+                <input type="text" placeholder="Optional">
+              </label>
+              <label>
+                <span>Formation time</span>
+                <input type="text" placeholder="Planet formation yr">
+              </label>
+            </div>
+
+            <div class="plot-placeholder">
+              <div class="plot-header">
+                <strong>Escape-rate preview</strong>
+                <span>time vs atmospheric escape</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="panel output-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="panel-kicker">Output Module</p>
+            <h2>Cumulative atmospheric loss</h2>
+          </div>
+          <button class="primary-button" type="button">Run calculation</button>
+        </div>
+
+        <div class="output-grid">
+          <div class="result-card">
+            <span class="result-label">Integrated loss</span>
+            <strong>--</strong>
+            <span class="result-copy">Total mass or moles removed over the selected evolution window.</span>
+          </div>
+
+          <div class="result-card">
+            <span class="result-label">Peak escape epoch</span>
+            <strong>--</strong>
+            <span class="result-copy">Time interval where the model predicts the highest escape rate.</span>
+          </div>
+
+          <div class="result-card">
+            <span class="result-label">Retained fraction</span>
+            <strong>--</strong>
+            <span class="result-copy">Optional summary once an initial atmosphere is defined.</span>
+          </div>
+        </div>
+
+        <div class="plot-placeholder output-plot">
+          <div class="plot-header">
+            <strong>Cumulative loss curve</strong>
+            <span>time vs integrated atmospheric loss</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="./script.js"></script>
+</body>
+</html>
