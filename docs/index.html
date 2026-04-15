@@ -19,7 +19,8 @@
     header h1 { font-size: 16px; font-weight: 600; }
     header p  { color: var(--muted); font-size: 13px; }
     .top-note { border-bottom: 1px solid var(--border); padding: 10px 28px; color: var(--muted); font-size: 13px; line-height: 1.5; }
-    .layout { display: grid; grid-template-columns: 360px 1fr; height: calc(100vh - 53px); }
+    .layout { display: grid; grid-template-columns: 360px 1fr; height: calc(100vh - 90px - 39px); }
+    .site-footer { border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; padding: 10px 28px 14px; text-align: center; }
 
     /* ── Sidebar ──────────────────────────────────────────────────── */
     .sidebar { border-right: 1px solid var(--border); overflow-y: auto; padding: 20px 18px; display: flex; flex-direction: column; gap: 18px; }
@@ -290,6 +291,10 @@
   </div>
 </main>
 </div>
+
+<footer class="site-footer" aria-label="Site attribution">
+  Built with Codex assistance. Scientific model and data are project-defined.
+</footer>
 
 <script src="./web_data.js"></script>
 <script>
