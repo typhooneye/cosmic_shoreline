@@ -13,6 +13,8 @@ Usage:
     total_loss = cs.integrate_carbon_loss(MMW=44, pl_orbsmax=1, pl_masse=1, st_mass=1.0, t1=1e6, dt=1e8)
 """
 
+from pathlib import Path
+
 import numpy as np
 import scipy
 import scipy.interpolate
@@ -1416,191 +1418,151 @@ class CosmicShoreline:
         return P_output, T_output, z_output
     
 
-# %%
-
-# lava_lamps = ["TOI-561 b",
-# "TOI-431 b",
-# "TOI-1807 b",
-# "TOI-1442 b",
-# "TOI-1416 b",
-# "TOI-1075 b",
-# "GJ 9827 b",
-# "HD 3167 b"]
-
-
-# other_planets = ["TRAPPIST-1 c",
-# "TRAPPIST-1 b",
-# "LTT 1445 A b",
-# "GJ 1132 b",
-# "GJ 486 b",
-# "LHS 3844 b",
-# "GJ 1252 b",
-# "TOI-1685 b",
-# "GJ 367 b",
-# "LHS 1478 b",
-# "55 Cnc e",
-# "K2-141 b",
-# "TOI-1468 b",
-# "LHS 1140 c"]
-
-# DDT_targets = ["TOI-1442 b",
-# "GJ 9827 b",
-# "TOI-1075 b",
-# "TOI-1416 b",
-# "TOI-500 b",
-# "TOI-1807 b",
-# "HD 3167 b",
-# "TOI-431 b",
-# "HD 20329 b",
-# "TOI-561 b"]
-
-DDT_targets = ["TOI-2445 b"]
+PLANETS = [
+    "55 Cnc e", "LHS 1140 b", "HD 3167 b", "L 98-59 d", "TOI-1685 b",
+    "TOI-561 b", "TOI-1468 b", "LP 890-9 c", "LTT 1445 A b", "L 98-59 c",
+    "LP 890-9 b", "LHS 3844 b", "LHS 1478 b", "GJ 486 b", "LHS 1140 c",
+    "GJ 3473 b", "GJ 357 b", "GJ 1132 b", "LTT 1445 A c", "TRAPPIST-1 b",
+    "GJ 3929 b", "TRAPPIST-1 c", "LHS 475 b", "TRAPPIST-1 e", "GJ 341 b",
+    "TRAPPIST-1 d", "GJ 367 b",
+]
+MMWS = (44, 16, 28)
+ATMOSPHERE_MASS_FACTOR = {44: 44 / 12, 16: 16 / 12, 28: 1}
+ARCHIVE = "./exoplanets_data/TSM/NASAExoArchive_2025-02-28_aggregate.csv"
+OUTPUT_DIR = "./data-montecarlo/exoplanets_montecarlo"
 
 
-df = pd.read_csv('./exoplanets_data/TSM/NASAExoArchive_2025-02-28_aggregate.csv')
-
-# generate df_target
-df_target = df[df['pl_name'].isin(DDT_targets)]
-
-
-
-# df_target = pd.read_csv('/project/abbot/xuanji/2.Cosmic-Shoreline/cosmic_shoreline/figures/CS_exoplanets.csv')
-
-
-# for i,row in df_target.iterrows():
-#     pl_name = row['pl_name'].replace(' ','_')
-#     pl_masse = row['pl_bmasse']
-#     pl_radiuse = row['pl_rade']
-
-#     print('running for planet:',pl_name)
-#     print('planet mass:',pl_masse) 
-#     print('planet radius:',pl_radiuse)
-
-# %%
-# Define constants
-num_samples = 1000
-MMWs = [44,16,28]
-# MMWs = [28]
-
-##################################################
-def age_sample_generator(num_samples, high_cutoff=14):
-    age_dist_V2 = pd.read_csv('data-interpolation/st_age_dist_V2.csv',skiprows=4)
-    age_dist_V2.head()
-    bin_width = np.mean(age_dist_V2['age'].values[1:]-age_dist_V2['age'].values[:-1])
-    bins = np.append(age_dist_V2['age'],age_dist_V2['age'].values[-1]+bin_width)
-    counts = age_dist_V2['pdf'].values
-    # Calculate probabilities
-    probs = counts / np.sum(counts)
-
-    # Generate random samples
+def age_sample_generator(num_samples, rng, high_cutoff=14):
+    age_dist = pd.read_csv("data-interpolation/st_age_dist_V2.csv", skiprows=4)
+    bin_width = np.mean(np.diff(age_dist["age"]))
+    bins = np.append(age_dist["age"], age_dist["age"].iloc[-1] + bin_width)
+    if not np.isfinite(high_cutoff) or high_cutoff <= bins[0]:
+        raise ValueError(f"Invalid stellar-age cutoff: {high_cutoff}")
+    probs = age_dist["pdf"].to_numpy() / age_dist["pdf"].sum()
     samples = []
-    for n in range(num_samples):
-        sample = 1e8
-        while sample > high_cutoff:
-            # Choose bin
-            bin_index = np.random.choice(len(bins) - 1, p=probs)
-            
-            # Sample within bin
-            low = bins[bin_index]
-            high = bins[bin_index + 1]
-            sample = np.random.uniform(low, high)
-        samples.append(sample)
-    return np.array(samples)
-    
-##################################################
-
-cs = CosmicShoreline()
-
-for MMW in MMWs:
-    for i,row in df_target.iterrows():
-        pl_name = row['pl_name'].replace(' ','_')
-        pl_masse = row['pl_bmasse']
-        pl_radiuse = row['pl_rade']
-        st_mass = row['st_mass']
-        pl_insol = row['pl_insol']
-        pl_orbsmax = row['pl_orbsmax']
-        pl_teq = row['pl_Teq']
-        if np.isnan(pl_orbsmax):
-            pl_orbsmax = (row['st_teff']/(np.sqrt(2)*row['pl_Teq']))**2*(row['st_rad']*0.00465047)
-        if np.isnan(pl_masse):
-            pl_masse = cs.M_R_fit(pl_radiuse, x_M_or_R='R')
-
-        print('running for planet:',pl_name)
-        print('planet mass:',pl_masse) 
-        print('planet radius:',pl_radiuse)
-        print('stellar mass:',st_mass)
-        print('stellar insolation:',pl_insol)
-        print('stellar orbital distance:',pl_orbsmax)
-        print('stellar effective temperature:',pl_teq)
-
-        planet_mass = np.ones(num_samples) * pl_masse
-        planet_radius = np.ones(num_samples) * pl_radiuse
-        stellar_mass = np.ones(num_samples) * st_mass
-        pl_insol = np.ones(num_samples) * pl_insol
-        pl_orbsmax = np.ones(num_samples) * pl_orbsmax
-        effective_temp = np.ones(num_samples) * pl_teq
-
-        
-
-        # stellar_age = np.random.normal(2.8, 1, num_samples) * 1e9  # in years
-        stellar_age = age_sample_generator(num_samples,high_cutoff = 1/st_mass**2.5*10)*1e9  # in years
-        formation_time = np.random.uniform(1, 100, num_samples) * 1e6  # in years #Righter&O'brien 2011
-        xray_model = np.random.choice(["Selsis", "Jackson"], num_samples)
-        euv_gamma1 = np.random.uniform(-0.35 - 0.15, -0.35 + 0.07, num_samples)
-        euv_gamma2 = np.random.uniform(-0.76 - 0.04, -0.76 + 0.16, num_samples)
-        CO2_fit = np.random.choice(["linear", "log", "GP"], num_samples)
-        CH4_efficiency = 10 ** np.random.uniform(np.log10(0.05), np.log10(0.5), num_samples)
-        N2O2_CP24_efficiency = np.random.uniform(0, 1, num_samples)
-        pl_XUV_flux = np.zeros(num_samples)
-        # Placeholder for atmospheric loss
-        atmospheric_loss = np.zeros(num_samples)
+    while len(samples) < num_samples:
+        indexes = rng.choice(len(probs), num_samples - len(samples), p=probs)
+        draws = rng.uniform(bins[indexes], bins[indexes + 1])
+        samples.extend(draws[draws <= high_cutoff])
+    return np.asarray(samples)
 
 
-        # Calculate atmospheric loss
-        for i in range(num_samples):
-            stellar_age[i] = max(stellar_age[i], formation_time[i] + 1e6)
-            orbital_distance = pl_orbsmax[i]
-            L_xuv = cs.calculate_L_XUV(stellar_mass[i], stellar_age[i], method=xray_model[i])
-            pl_XUV_flux[i] = cs._calculate_F_xuv_to_earth(L_xuv, orbital_distance)
-            pl_orbsmax[i] = orbital_distance
-            atmospheric_loss[i] = cs.integrate_carbon_loss(
-                MMW, orbital_distance, planet_mass[i], stellar_mass[i],
-                t1=formation_time[i],
-                dt= stellar_age[i] - formation_time[i],
-                method=xray_model[i],
-                CO2_fit=CO2_fit[i],
-                epsilon=CH4_efficiency[i],
-                gamma1=euv_gamma1[i],
-                gamma2=euv_gamma2[i],
-                N2O2_model="CP24",
-                frac = N2O2_CP24_efficiency[i],
-                pl_radiuse=planet_radius[i])
-        print(stellar_age)
-        # Create pandas DataFrame
-        data = {
-            "pl_mass": planet_mass,
-            "st_mass": stellar_mass,
-            "pl_teff": effective_temp,
-            "pl_insol": pl_insol,
-            "pl_XUV_flux": pl_XUV_flux,
-            "pl_orbsmax": pl_orbsmax,   
+def planet_parameters(row, cs):
+    radius = row["pl_rade"]
+    mass = row["pl_bmasse"]
+    mass_is_upper_limit = row["pl_bmasselim"] == 1
+    if not np.isfinite(mass) or mass_is_upper_limit:
+        if not np.isfinite(radius):
+            raise ValueError(f"{row['pl_name']}: mass and radius are both unavailable")
+        mass = float(cs.M_R_fit(radius, x_M_or_R="R"))
+        mass_source = "radius relation"
+    else:
+        mass_source = "catalog"
+    if not np.isfinite(radius):
+        radius = float(cs.M_R_fit(mass, x_M_or_R="M"))
+
+    stellar_mass = row["st_mass"]
+    orbital_distance = row["pl_orbsmax"]
+    orbit_source = "catalog"
+    if not np.isfinite(orbital_distance):
+        period = row["pl_orbper"]
+        if not np.isfinite(period) or not np.isfinite(stellar_mass):
+            raise ValueError(f"{row['pl_name']}: cannot infer orbital distance")
+        orbital_distance = (stellar_mass * (period / 365.25) ** 2) ** (1 / 3)
+        orbit_source = "Kepler"
+
+    values = {"mass": mass, "radius": radius, "stellar mass": stellar_mass,
+              "orbital distance": orbital_distance}
+    invalid = [name for name, value in values.items() if not np.isfinite(value) or value <= 0]
+    if invalid:
+        raise ValueError(f"{row['pl_name']}: invalid {', '.join(invalid)}")
+    return mass, radius, stellar_mass, orbital_distance, mass_source, orbit_source
+
+
+def run_monte_carlo(planets=PLANETS, num_samples=1000, seed=42, output_dir=OUTPUT_DIR):
+    rng = np.random.default_rng(seed)
+    archive = pd.read_csv(ARCHIVE, low_memory=False)
+    rows = archive.drop_duplicates("pl_name").set_index("pl_name")
+    missing = [name for name in planets if name not in rows.index]
+    if missing:
+        raise ValueError(f"Planets missing from archive: {', '.join(missing)}")
+
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+    cs = CosmicShoreline()
+
+    for name in planets:
+        row = rows.loc[name]
+        mass, radius, stellar_mass, orbital_distance, mass_source, orbit_source = planet_parameters(row, cs)
+        stellar_age = age_sample_generator(num_samples, rng, 10 / stellar_mass ** 2.5) * 1e9
+        formation_time = rng.uniform(1, 100, num_samples) * 1e6
+        stellar_age = np.maximum(stellar_age, formation_time + 1e6)
+        xray_model = rng.choice(["Selsis", "Jackson"], num_samples)
+        euv_gamma1 = rng.uniform(-0.50, -0.28, num_samples)
+        euv_gamma2 = rng.uniform(-0.80, -0.60, num_samples)
+        co2_fit = rng.choice(["linear", "log", "GP"], num_samples)
+        ch4_efficiency = 10 ** rng.uniform(np.log10(0.05), np.log10(0.5), num_samples)
+        n2o2_fraction = rng.uniform(0, 1, num_samples)
+        xuv_flux = np.array([
+            cs._calculate_F_xuv_to_earth(
+                cs.calculate_L_XUV(stellar_mass, stellar_age[i], method=xray_model[i]),
+                orbital_distance,
+            )
+            for i in range(num_samples)
+        ])
+
+        common = {
+            "pl_mass": np.full(num_samples, mass),
+            "pl_radius": np.full(num_samples, radius),
+            "mass_source": np.full(num_samples, mass_source),
+            "st_mass": np.full(num_samples, stellar_mass),
+            "pl_teff": np.full(num_samples, row["pl_Teq"]),
+            "pl_insol": np.full(num_samples, row["pl_insol"]),
+            "pl_XUV_flux": xuv_flux,
+            "pl_orbsmax": np.full(num_samples, orbital_distance),
+            "orbit_source": np.full(num_samples, orbit_source),
             "st_age": stellar_age,
             "pl_form_yr": formation_time,
             "x-ray-model": xray_model,
             "euv_gamma1": euv_gamma1,
             "euv_gamma2": euv_gamma2,
-            "co2_fit": CO2_fit,
-            "ch4_eta": CH4_efficiency,
-            "C_loss": atmospheric_loss,
-            "N2O2_frac": N2O2_CP24_efficiency,
-            "CH4_epsilon": CH4_efficiency
+            "co2_fit": co2_fit,
+            "ch4_eta": ch4_efficiency,
+            "N2O2_frac": n2o2_fraction,
         }
 
-        df = pd.DataFrame(data)
-        if MMW == 28:
-            df.to_csv('./data-montecarlo/exoplanets_montecarlo/'+
-                      'df_%s_MMW_%d_CP24.csv'%(pl_name, MMW))
-        else:
-            df.to_csv('./data-montecarlo/exoplanets_montecarlo/'+
-                      'df_%s_MMW_%d.csv'%(pl_name, MMW))
-# %%
+        for mmw in MMWS:
+            species_loss = np.array([
+                cs.integrate_carbon_loss(
+                    mmw, orbital_distance, mass, stellar_mass,
+                    t1=formation_time[i], dt=stellar_age[i] - formation_time[i],
+                    method=xray_model[i], CO2_fit=co2_fit[i], epsilon=ch4_efficiency[i],
+                    gamma1=euv_gamma1[i], gamma2=euv_gamma2[i],
+                    N2O2_model="CP24", frac=n2o2_fraction[i], pl_radiuse=radius,
+                )
+                for i in range(num_samples)
+            ])
+            if not np.isfinite(species_loss).all() or (species_loss < 0).any():
+                raise ValueError(f"{name}, MMW={mmw}: invalid atmospheric loss")
+            data = common | {
+                "C_loss": species_loss,
+                "atmospheric_loss": species_loss * ATMOSPHERE_MASS_FACTOR[mmw],
+            }
+            suffix = "_CP24" if mmw == 28 else ""
+            path = output_path / f"df_{name.replace(' ', '_')}_MMW_{mmw}{suffix}.csv"
+            pd.DataFrame(data).to_csv(path, index=False)
+            print(path)
+
+
+def self_check():
+    assert len(PLANETS) == len(set(PLANETS)) == 27
+    rows = pd.read_csv(ARCHIVE, low_memory=False).drop_duplicates("pl_name").set_index("pl_name")
+    cs = CosmicShoreline()
+    toi = planet_parameters(rows.loc["TOI-1468 b"], cs)
+    gj = planet_parameters(rows.loc["GJ 341 b"], cs)
+    assert np.isclose(toi[3], 0.0208105620) and toi[5] == "Kepler"
+    assert np.isclose(gj[0], 0.6438968454) and gj[4:] == ("radius relation", "Kepler")
+
+
+if __name__ == "__main__":
+    run_monte_carlo()
